@@ -14,6 +14,10 @@
 
         public DateTime? CreatedAt { get; set; }
 
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+
         public virtual ICollection<UserRoomAccess> UserRoomAccesses { get; set; } = new List<UserRoomAccess>();
     }
 }

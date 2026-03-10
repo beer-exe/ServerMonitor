@@ -6,12 +6,12 @@ namespace ServerMonitorApp.Infrastructure.Services
     {
         public string HashPassword(string password)
         {
-            return BCrypt.Net.BCrypt.EnhancedHashPassword(password, BCrypt.Net.HashType.SHA512);
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         public bool VerifyPassword(string password, string passwordHash)
         {
-            return BCrypt.Net.BCrypt.EnhancedVerify(password, passwordHash, BCrypt.Net.HashType.SHA512);
+            return BCrypt.Net.BCrypt.Verify(password, passwordHash);
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using ServerMonitorApp.API.Middlewares;
 using ServerMonitorApp.Application;
-using ServerMonitorApp.Infrastructure.Persistence;
+using ServerMonitorApp.Infrastructure;
 using System.Text.Json.Serialization;
 
 namespace ServerMonitorApp.API
@@ -16,9 +16,8 @@ namespace ServerMonitorApp.API
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddInfrastructureServices(Configuration);
             services.AddApplicationServices(Configuration);
-
-            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
@@ -37,6 +36,8 @@ namespace ServerMonitorApp.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseMiddleware<ErrorHandlerMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();

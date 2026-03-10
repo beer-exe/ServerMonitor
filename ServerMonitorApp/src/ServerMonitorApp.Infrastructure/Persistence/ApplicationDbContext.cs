@@ -143,7 +143,7 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnName("timestamp");
                 entity.HasOne(d => d.Device)
-                    .WithMany()
+                    .WithMany(d => d.SensorDatas)
                     .HasForeignKey(d => d.DeviceId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("fk_sensor_device");
@@ -178,6 +178,11 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                 entity.Property(e => e.Username)
                     .HasMaxLength(50)
                     .HasColumnName("username");
+                entity.Property(e => e.RefreshToken)
+                    .HasColumnName("refresh_token");
+                entity.Property(e => e.RefreshTokenExpiryTime)
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("refresh_token_expiry_time");
             });
 
             modelBuilder.Entity<UserRoomAccess>(entity =>
