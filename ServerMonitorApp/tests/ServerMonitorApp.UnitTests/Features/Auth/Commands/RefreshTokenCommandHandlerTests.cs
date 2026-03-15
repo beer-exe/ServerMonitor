@@ -60,7 +60,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
 
             RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object);
 
-            Response<AuthResponse>? response = await handler.Handle(command, CancellationToken.None);
+            Response<AuthResponseDto>? response = await handler.Handle(command, CancellationToken.None);
 
             Assert.True(response.Succeeded);
             Assert.Equal("Refresh Token thành công.", response.Message);

@@ -54,7 +54,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
 
             LoginCommandHandler? handler = new LoginCommandHandler(_dbContext, _passwordHasherMock.Object, _jwtTokenGeneratorMock.Object);
 
-            Response<AuthResponse>? response = await handler.Handle(command, CancellationToken.None);
+            Response<AuthResponseDto>? response = await handler.Handle(command, CancellationToken.None);
 
             Assert.True(response.Succeeded);
             Assert.Equal("Đăng nhập thành công.", response.Message);

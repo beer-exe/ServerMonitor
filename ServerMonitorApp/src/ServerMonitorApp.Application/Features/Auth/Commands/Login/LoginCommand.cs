@@ -4,7 +4,7 @@ using ServerMonitorApp.Application.Wrappers;
 
 namespace ServerMonitorApp.Application.Features.Auth.Commands.Login
 {
-    public class LoginCommand : IRequest<Response<AuthResponse>>
+    public class LoginCommand : IRequest<Response<AuthResponseDto>>
     {
         public string UsernameOrEmail { get; set; } = null!;
         public string Password { get; set; } = null!;

@@ -21,14 +21,14 @@ namespace ServerMonitorApp.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginCommand command)
         {
-            Response<AuthResponse>? response = await _mediator.Send(command);
+            Response<AuthResponseDto>? response = await _mediator.Send(command);
             return Ok(response);
         }
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
         {
-            Response<AuthResponse>? response = await _mediator.Send(command);
+            Response<AuthResponseDto>? response = await _mediator.Send(command);
             return Ok(response);
         }
     }

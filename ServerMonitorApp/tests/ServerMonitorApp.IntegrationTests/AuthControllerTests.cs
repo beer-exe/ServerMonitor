@@ -31,7 +31,7 @@ namespace ServerMonitorApp.IntegrationTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             string? responseString = await response.Content.ReadAsStringAsync();
-            Response<AuthResponse>? result = JsonSerializer.Deserialize<Response<AuthResponse>>(responseString, new JsonSerializerOptions
+            Response<AuthResponseDto>? result = JsonSerializer.Deserialize<Response<AuthResponseDto>>(responseString, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });

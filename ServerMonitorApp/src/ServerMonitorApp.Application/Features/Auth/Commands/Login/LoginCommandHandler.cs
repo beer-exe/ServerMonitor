@@ -8,7 +8,7 @@ using ServerMonitorApp.Domain.Models;
 
 namespace ServerMonitorApp.Application.Features.Auth.Commands.Login
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, Response<AuthResponse>>
+    public class LoginCommandHandler : IRequestHandler<LoginCommand, Response<AuthResponseDto>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IPasswordHasher _passwordHasher;
@@ -21,7 +21,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.Login
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
-        public async Task<Response<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<Response<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             User? user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.UsernameOrEmail || u.Email == request.UsernameOrEmail, cancellationToken);
 
@@ -37,7 +37,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.Login
             user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
             await _context.SaveChangesAsync(cancellationToken);
 
-            AuthResponse? responseData = new AuthResponse
+            AuthResponseDto? responseData = new AuthResponseDto
             {
                 UserId = user.Id.ToString(),
                 FullName = user.Username,
@@ -46,7 +46,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.Login
                 RefreshToken = refreshToken
             };
 
-            return new Response<AuthResponse>(responseData, "Đăng nhập thành công.");
+            return new Response<AuthResponseDto>(responseData, "Đăng nhập thành công.");
         }
     }
 }

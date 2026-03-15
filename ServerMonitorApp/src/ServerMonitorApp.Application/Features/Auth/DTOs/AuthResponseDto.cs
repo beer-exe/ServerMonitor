@@ -1,6 +1,6 @@
 ﻿namespace ServerMonitorApp.Application.Features.Auth.DTOs
 {
-    public class AuthResponse
+    public class AuthResponseDto
     {
         public string UserId { get; set; }
         public string FullName { get; set; }

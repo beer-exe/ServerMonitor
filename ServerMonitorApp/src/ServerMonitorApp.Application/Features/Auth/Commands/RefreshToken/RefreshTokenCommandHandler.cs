@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
 {
-    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Response<AuthResponse>>
+    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Response<AuthResponseDto>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -20,7 +20,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
-        public async Task<Response<AuthResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+        public async Task<Response<AuthResponseDto>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
             ClaimsPrincipal? principal = _jwtTokenGenerator.GetPrincipalFromExpiredToken(request.AccessToken);
             string? userIdString = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
@@ -44,7 +44,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
             user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
             await _context.SaveChangesAsync(cancellationToken);
 
-            AuthResponse? responseData = new AuthResponse
+            AuthResponseDto? responseData = new AuthResponseDto
             {
                 UserId = user.Id.ToString(),
                 FullName = user.Username,
@@ -53,7 +53,7 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
                 RefreshToken = newRefreshToken
             };
 
-            return new Response<AuthResponse>(responseData, "Refresh Token thành công.");
+            return new Response<AuthResponseDto>(responseData, "Refresh Token thành công.");
         }
     }
 }
