@@ -9,6 +9,8 @@
 
         public bool? ReceiveAlerts { get; set; }
 
+        public DateTime? UpdatedAt { get; set; }
+
         public virtual Room Room { get; set; } = null!;
 
         public virtual User User { get; set; } = null!;

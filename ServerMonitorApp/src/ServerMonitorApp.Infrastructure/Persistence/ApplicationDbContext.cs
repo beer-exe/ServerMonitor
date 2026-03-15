@@ -39,11 +39,17 @@ namespace ServerMonitorApp.Infrastructure.Persistence
 
                 entity.HasIndex(e => new { e.RoomId, e.IsResolved }, "idx_alerts_room_resolved");
 
-                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Id)
+                    .ValueGeneratedOnAdd()
+                    .HasColumnName("id");
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnType("timestamp without time zone")
                     .HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("updated_at");
                 entity.Property(e => e.DeviceId).HasColumnName("device_id");
                 entity.Property(e => e.IsResolved)
                     .HasDefaultValue(false)
@@ -79,9 +85,16 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnType("timestamp without time zone")
                     .HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("updated_at");
                 entity.Property(e => e.CriticalTemp)
                     .HasPrecision(5, 2)
                     .HasColumnName("critical_temp");
+                entity.Property(e => e.CriticalHumidity)
+                    .HasPrecision(5, 2)
+                    .HasColumnName("critical_humidity");
                 entity.Property(e => e.IsActive)
                     .HasDefaultValue(true)
                     .HasColumnName("is_active");
@@ -95,6 +108,9 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                 entity.Property(e => e.WarningTemp)
                     .HasPrecision(5, 2)
                     .HasColumnName("warning_temp");
+                entity.Property(e => e.WarningHumidity)
+                    .HasPrecision(5, 2)
+                    .HasColumnName("warning_humidity");
 
                 entity.HasOne(d => d.Room).WithMany(p => p.Devices)
                     .HasForeignKey(d => d.RoomId)
@@ -115,6 +131,10 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnType("timestamp without time zone")
                     .HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("updated_at");
                 entity.Property(e => e.Location)
                     .HasMaxLength(255)
                     .HasColumnName("location");
@@ -130,6 +150,7 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                 entity.HasKey(e => new { e.Id, e.Timestamp }).HasName("sensor_data_pkey1");
 
                 entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd()
                     .HasColumnName("id");
 
                 entity.Property(e => e.DeviceId).HasColumnName("device_id");
@@ -166,6 +187,10 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .HasColumnType("timestamp without time zone")
                     .HasColumnName("created_at");
+                entity.Property(e => e.UpdatedAt)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("updated_at");
                 entity.Property(e => e.Email)
                     .HasMaxLength(100)
                     .HasColumnName("email");
@@ -196,13 +221,19 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                 entity.Property(e => e.ReceiveAlerts)
                     .HasDefaultValue(true)
                     .HasColumnName("receive_alerts");
+                entity.Property(e => e.UpdatedAt)
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .HasColumnType("timestamp without time zone")
+                    .HasColumnName("updated_at");
 
                 entity.HasOne(d => d.Room).WithMany(p => p.UserRoomAccesses)
                     .HasForeignKey(d => d.RoomId)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("user_room_access_room_id_fkey");
 
                 entity.HasOne(d => d.User).WithMany(p => p.UserRoomAccesses)
                     .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("user_room_access_user_id_fkey");
             });
 

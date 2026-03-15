@@ -10,6 +10,8 @@
 
         public DateTime? CreatedAt { get; set; }
 
+        public DateTime? UpdatedAt { get; set; }
+
         public virtual ICollection<Alert> Alerts { get; set; } = new List<Alert>();
 
         public virtual ICollection<Device> Devices { get; set; } = new List<Device>();

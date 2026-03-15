@@ -12,9 +12,15 @@
 
         public DateTime? CreatedAt { get; set; }
 
+        public DateTime? UpdatedAt { get; set; }
+
         public decimal? WarningTemp { get; set; }
 
         public decimal? CriticalTemp { get; set; }
+
+        public decimal? WarningHumidity { get; set; }
+
+        public decimal? CriticalHumidity { get; set; }
 
         public DateTime? LastSeen { get; set; }
 

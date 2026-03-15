@@ -16,6 +16,8 @@
 
         public DateTime? CreatedAt { get; set; }
 
+        public DateTime? UpdatedAt { get; set; }
+
         public string? Severity { get; set; }
 
         public virtual Device? Device { get; set; }
