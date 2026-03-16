@@ -32,7 +32,7 @@ namespace ServerMonitorApp.Application.Features.Users.Commands.UpdateUser
 
             user.Email = request.Email;
             user.Role = request.Role;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
             await _context.SaveChangesAsync(cancellationToken);
 
