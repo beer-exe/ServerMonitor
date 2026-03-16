@@ -43,7 +43,7 @@ namespace ServerMonitorApp.IntegrationTests
                             Username = "integrationuser",
                             Email = "integration@test.com",
                             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-                            Role = "Admin"
+                            Role = "ADMIN"
                         });
                         db.SaveChanges();
                     }
