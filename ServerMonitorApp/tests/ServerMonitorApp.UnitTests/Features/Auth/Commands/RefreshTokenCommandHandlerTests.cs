@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using ServerMonitorApp.Application.Common.Exceptions;
 using ServerMonitorApp.Application.Common.Interfaces;
@@ -15,6 +16,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
     {
         private readonly Mock<IJwtTokenGenerator> _jwtTokenGeneratorMock;
         private readonly ApplicationDbContext _dbContext;
+        private readonly IConfiguration _configuration;
 
         public RefreshTokenCommandHandlerTests()
         {
@@ -25,6 +27,13 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
                 .Options;
 
             _dbContext = new ApplicationDbContext(options);
+
+            Dictionary<string, string?>? inMemorySettings = new Dictionary<string, string?> {
+                {"JwtSettings:RefreshTokenExpirationDays", "7"}
+            };
+            _configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
         }
 
         [Fact]
@@ -58,7 +67,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
             _jwtTokenGeneratorMock.Setup(x => x.GenerateAccessToken(It.IsAny<User>())).Returns("new_access_token");
             _jwtTokenGeneratorMock.Setup(x => x.GenerateRefreshToken()).Returns("new_refresh_token");
 
-            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object);
+            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object, _configuration);
 
             Response<AuthResponseDto>? response = await handler.Handle(command, CancellationToken.None);
 
@@ -84,7 +93,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
             ClaimsPrincipal? principal = new ClaimsPrincipal(new ClaimsIdentity());
             _jwtTokenGeneratorMock.Setup(x => x.GetPrincipalFromExpiredToken(command.AccessToken)).Returns(principal);
 
-            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object);
+            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object, _configuration);
 
             ApiException? exception = await Assert.ThrowsAsync<ApiException>(() => handler.Handle(command, CancellationToken.None));
             Assert.Equal("Access Token không hợp lệ.", exception.Message);
@@ -119,7 +128,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
             _jwtTokenGeneratorMock.Setup(x => x.GetPrincipalFromExpiredToken(command.AccessToken))
                 .Returns(principal);
 
-            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object);
+            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object, _configuration);
 
             ApiException? exception = await Assert.ThrowsAsync<ApiException>(() => handler.Handle(command, CancellationToken.None));
             Assert.Equal("Refresh Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.", exception.Message);
@@ -153,7 +162,7 @@ namespace ServerMonitorApp.UnitTests.Features.Auth.Commands
 
             _jwtTokenGeneratorMock.Setup(x => x.GetPrincipalFromExpiredToken(command.AccessToken)).Returns(principal);
 
-            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object);
+            RefreshTokenCommandHandler? handler = new RefreshTokenCommandHandler(_dbContext, _jwtTokenGeneratorMock.Object, _configuration);
 
             ApiException? exception = await Assert.ThrowsAsync<ApiException>(() => handler.Handle(command, CancellationToken.None));
             Assert.Equal("Refresh Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.", exception.Message);
