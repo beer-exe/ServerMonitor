@@ -26,4 +26,8 @@
     <ProjectReference Include="..\ServerMonitorApp.Domain\ServerMonitorApp.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\IoT\DTOs\" />
+  </ItemGroup>
+
 </Project>

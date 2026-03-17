@@ -162,6 +162,7 @@ namespace ServerMonitorApp.Infrastructure.Persistence
                     .HasColumnName("humidity");
                 entity.Property(e => e.Timestamp)
                     .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .HasColumnType("timestamp without time zone")
                     .HasColumnName("timestamp");
                 entity.HasOne(d => d.Device)
                     .WithMany(d => d.SensorDatas)
