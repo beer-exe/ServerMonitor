@@ -13,7 +13,8 @@ namespace ServerMonitorApp.Application
         {
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-            services.AddMediatR(options => {
+            services.AddMediatR(options => 
+            {
                 options.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
                 options.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
             });

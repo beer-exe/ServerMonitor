@@ -17,6 +17,7 @@ namespace ServerMonitorApp.Infrastructure
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
             services.AddTransient<IPasswordHasher, PasswordHasher>();
+            services.AddTransient<IMonitorHubService, MonitorHubService>();
             services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
 
             return services;

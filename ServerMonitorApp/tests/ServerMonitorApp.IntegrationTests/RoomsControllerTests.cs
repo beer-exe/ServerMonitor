@@ -173,6 +173,7 @@ namespace ServerMonitorApp.IntegrationTests
                 Name = $"To Delete {uniqueSuffix}",
                 Location = "Tầng Xóa"
             };
+
             HttpResponseMessage? createRes = await _client.PostAsJsonAsync("/api/Rooms", createCmd);
             Guid createdRoomId = (await createRes.Content.ReadFromJsonAsync<Response<Guid>>())!.Data;
 
