@@ -49,7 +49,7 @@ namespace ServerMonitorApp.API.Middlewares
 
                     default:
                         response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        responseModel.Message = $"Lỗi Server: {error.Message} | Stack: {error.InnerException?.Message}";
+                        responseModel.Message = $"Internal Server Error: {error.Message} | Stack: {error.InnerException?.Message}";
                         break;
                 }
 
