@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ServerMonitorApp.Application.Common.Exceptions;
 using ServerMonitorApp.Application.Common.Interfaces;
 using ServerMonitorApp.Application.Features.Auth.DTOs;
@@ -13,11 +14,13 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
     {
         private readonly IApplicationDbContext _context;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
+        private readonly IConfiguration _configuration;
 
-        public RefreshTokenCommandHandler(IApplicationDbContext context, IJwtTokenGenerator jwtTokenGenerator)
+        public RefreshTokenCommandHandler(IApplicationDbContext context, IJwtTokenGenerator jwtTokenGenerator, IConfiguration configuration)
         {
             _context = context;
             _jwtTokenGenerator = jwtTokenGenerator;
+            _configuration = configuration;
         }
 
         public async Task<Response<AuthResponseDto>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
@@ -40,8 +43,15 @@ namespace ServerMonitorApp.Application.Features.Auth.Commands.RefreshToken
             string? newAccessToken = _jwtTokenGenerator.GenerateAccessToken(user);
             string? newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
+            string? expiryDaysString = _configuration["JwtSettings:RefreshTokenExpirationDays"];
+            int refreshTokenExpirationDays = 7;
+            if (int.TryParse(expiryDaysString, out int parsedDays))
+            {
+                refreshTokenExpirationDays = parsedDays;
+            }
+
             user.RefreshToken = newRefreshToken;
-            user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
+            user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(refreshTokenExpirationDays), DateTimeKind.Unspecified);
             await _context.SaveChangesAsync(cancellationToken);
 
             AuthResponseDto? responseData = new AuthResponseDto
