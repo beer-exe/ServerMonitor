@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
 using ServerMonitorApp.Application.Common.Exceptions;
+using ServerMonitorApp.Application.Common.Interfaces;
 using ServerMonitorApp.Application.Features.IoT.Commands.RecordSensorData;
 using ServerMonitorApp.Application.Wrappers;
 using ServerMonitorApp.Domain.Models;
@@ -39,7 +42,13 @@ namespace ServerMonitorApp.UnitTests.Features.IoT.Commands
                 Humidity = 60.0m
             };
 
-            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(_dbContext);
+            Mock<IMonitorHubService>? mockMonitorHubService = new Mock<IMonitorHubService>();
+            Mock<ILogger<RecordSensorDataCommandHandler>>? mockLogger = new Mock<ILogger<RecordSensorDataCommandHandler>>();
+
+            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(
+                _dbContext,
+                mockMonitorHubService.Object,
+                mockLogger.Object);
 
             Response<long>? response = await handler.Handle(command, CancellationToken.None);
 
@@ -66,7 +75,13 @@ namespace ServerMonitorApp.UnitTests.Features.IoT.Commands
                 Humidity = 60.0m
             };
 
-            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(_dbContext);
+            Mock<IMonitorHubService>? mockMonitorHubService = new Mock<IMonitorHubService>();
+            Mock<ILogger<RecordSensorDataCommandHandler>>? mockLogger = new Mock<ILogger<RecordSensorDataCommandHandler>>();
+
+            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(
+                _dbContext,
+                mockMonitorHubService.Object,
+                mockLogger.Object);
 
             ApiException? exception = await Assert.ThrowsAsync<ApiException>(() => handler.Handle(command, CancellationToken.None));
             Assert.Equal("Thiết bị không tồn tại hoặc mã thiết bị không hợp lệ.", exception.Message);
@@ -91,7 +106,13 @@ namespace ServerMonitorApp.UnitTests.Features.IoT.Commands
                 Humidity = 60.0m
             };
 
-            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(_dbContext);
+            Mock<IMonitorHubService>? mockMonitorHubService = new Mock<IMonitorHubService>();
+            Mock<ILogger<RecordSensorDataCommandHandler>>? mockLogger = new Mock<ILogger<RecordSensorDataCommandHandler>>();
+
+            RecordSensorDataCommandHandler? handler = new RecordSensorDataCommandHandler(
+                _dbContext,
+                mockMonitorHubService.Object,
+                mockLogger.Object);
 
             ApiException? exception = await Assert.ThrowsAsync<ApiException>(() => handler.Handle(command, CancellationToken.None));
             Assert.Equal("Thiết bị đang bị vô hiệu hóa. Không thể nhận dữ liệu.", exception.Message);
