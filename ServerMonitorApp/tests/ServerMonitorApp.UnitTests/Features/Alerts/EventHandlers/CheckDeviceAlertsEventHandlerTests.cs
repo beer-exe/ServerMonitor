@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ServerMonitorApp.Application.Features.Alerts.EventHandlers;
+using ServerMonitorApp.Application.Features.Alerts.Events;
 using ServerMonitorApp.Application.Features.IoT.Events;
 using ServerMonitorApp.Domain.Models;
 using ServerMonitorApp.Infrastructure.Persistence;
@@ -12,6 +14,7 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly Mock<ILogger<CheckDeviceAlertsEventHandler>> _loggerMock;
+        private readonly Mock<IMediator> _mediatorMock;
 
         public CheckDeviceAlertsEventHandlerTests()
         {
@@ -21,6 +24,7 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
 
             _dbContext = new ApplicationDbContext(options);
             _loggerMock = new Mock<ILogger<CheckDeviceAlertsEventHandler>>();
+            _mediatorMock = new Mock<IMediator>();
         }
 
         [Fact]
@@ -31,12 +35,14 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             await _dbContext.SaveChangesAsync();
 
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(deviceId, 1L, 50m, 90m);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object, _mediatorMock.Object);
 
             await handler.Handle(notification, CancellationToken.None);
 
             int alertCount = await _dbContext.Alerts.CountAsync();
-            Assert.Equal(0, alertCount); // Không có cảnh báo nào được tạo
+            Assert.Equal(0, alertCount);
+
+            _mediatorMock.Verify(m => m.Publish(It.IsAny<DeviceAlertTriggeredEvent>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -56,7 +62,7 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             await _dbContext.SaveChangesAsync();
 
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(deviceId, 1L, 45m, 50m);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object, _mediatorMock.Object);
 
             await handler.Handle(notification, CancellationToken.None);
 
@@ -65,6 +71,8 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             Assert.Equal("CRITICAL", alert!.Severity);
             Assert.Contains("Nhiệt độ VƯỢT NGƯỠNG NGUY HIỂM", alert.Message);
             Assert.False(alert.IsResolved);
+
+            _mediatorMock.Verify(m => m.Publish(It.IsAny<DeviceAlertTriggeredEvent>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -84,7 +92,7 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             await _dbContext.SaveChangesAsync();
 
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(deviceId, 1L, 25m, 70m);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object, _mediatorMock.Object);
 
             await handler.Handle(notification, CancellationToken.None);
 
@@ -92,6 +100,8 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             Assert.NotNull(alert);
             Assert.Equal("WARNING", alert!.Severity);
             Assert.Contains("Độ ẩm cảnh báo cao", alert.Message);
+
+            _mediatorMock.Verify(m => m.Publish(It.IsAny<DeviceAlertTriggeredEvent>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -121,12 +131,14 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             await _dbContext.SaveChangesAsync();
 
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(deviceId, 2L, 45m, 50m);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object, _mediatorMock.Object);
 
             await handler.Handle(notification, CancellationToken.None);
 
             int alertCount = await _dbContext.Alerts.CountAsync();
             Assert.Equal(1, alertCount);
+
+            _mediatorMock.Verify(m => m.Publish(It.IsAny<DeviceAlertTriggeredEvent>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -147,12 +159,14 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
             await _dbContext.SaveChangesAsync();
 
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(deviceId, 1L, 25m, 50m);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(_dbContext, _loggerMock.Object, _mediatorMock.Object);
 
             await handler.Handle(notification, CancellationToken.None);
 
             int alertCount = await _dbContext.Alerts.CountAsync();
             Assert.Equal(0, alertCount);
+
+            _mediatorMock.Verify(m => m.Publish(It.IsAny<DeviceAlertTriggeredEvent>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -163,7 +177,7 @@ namespace ServerMonitorApp.UnitTests.Features.Alerts.EventHandlers
                 .Options;
 
             using BuggyDbContext? buggyContext = new BuggyDbContext(dbContextOptions);
-            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(buggyContext, _loggerMock.Object);
+            CheckDeviceAlertsEventHandler handler = new CheckDeviceAlertsEventHandler(buggyContext, _loggerMock.Object, _mediatorMock.Object);
             SensorDataRecordedEvent notification = new SensorDataRecordedEvent(Guid.NewGuid(), 1L, 40m, 80m);
 
             await handler.Handle(notification, CancellationToken.None);
