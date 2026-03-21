@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NETCore.MailKit.Core;
 using ServerMonitorApp.Application.Common.Interfaces;
 using ServerMonitorApp.Infrastructure.Persistence;
 using ServerMonitorApp.Infrastructure.Services;
@@ -16,6 +15,7 @@ namespace ServerMonitorApp.Infrastructure
 
             services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
+            services.AddTransient<IEmailService, EmailService>();
             services.AddTransient<IPasswordHasher, PasswordHasher>();
             services.AddTransient<IMonitorHubService, MonitorHubService>();
             services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using ServerMonitorApp.API.Hubs;
 using ServerMonitorApp.Application.Common.Interfaces;
+using ServerMonitorApp.Application.Features.Alerts.DTOs;
 using ServerMonitorApp.Application.Features.Dashboard.DTOs;
 
 namespace ServerMonitorApp.API.Services
@@ -17,6 +18,11 @@ namespace ServerMonitorApp.API.Services
         public async Task SendDeviceUpdateToGroupAsync(string groupName, DeviceUpdateDto update)
         {
             await _hubContext.Clients.Group(groupName).ReceiveDeviceUpdate(update);
+        }
+
+        public async Task SendAlertToGroupAsync(string groupName, AlertDto alert)
+        {
+            await _hubContext.Clients.Group(groupName).ReceiveAlert(alert);
         }
     }
 }

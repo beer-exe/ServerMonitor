@@ -29,7 +29,7 @@ namespace ServerMonitorApp.Infrastructure.Services
                     DeviceId = deviceId,
                     Temperature = temperature,
                     Humidity = humidity,
-                    Timestamp = DateTime.UtcNow
+                    Timestamp = DateTime.Now
                 };
 
                 await _dispatcher.SendDeviceUpdateToGroupAsync(groupName, updateData);

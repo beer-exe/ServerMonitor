@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using ServerMonitorApp.API.HostedServices;
 using ServerMonitorApp.API.Hubs;
 using ServerMonitorApp.API.Middlewares;
 using ServerMonitorApp.API.Services;
@@ -26,6 +27,8 @@ namespace ServerMonitorApp.API
             services.AddSignalR();
 
             services.AddTransient<IMonitorHubDispatcher, MonitorHubDispatcher>();
+
+            services.AddHostedService<DeviceStatusMonitorWorker>();
 
             services.AddInfrastructureServices(Configuration);
             services.AddApplicationServices(Configuration);

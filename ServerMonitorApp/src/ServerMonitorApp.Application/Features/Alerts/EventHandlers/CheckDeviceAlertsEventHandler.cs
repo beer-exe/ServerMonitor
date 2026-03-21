@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ServerMonitorApp.Application.Common.Interfaces;
+using ServerMonitorApp.Application.Features.Alerts.Events;
 using ServerMonitorApp.Application.Features.IoT.Events;
 using ServerMonitorApp.Domain.Models;
 
@@ -11,11 +12,13 @@ namespace ServerMonitorApp.Application.Features.Alerts.EventHandlers
     {
         private readonly IApplicationDbContext _context;
         private readonly ILogger<CheckDeviceAlertsEventHandler> _logger;
+        private readonly IMediator _mediator;
 
-        public CheckDeviceAlertsEventHandler(IApplicationDbContext context, ILogger<CheckDeviceAlertsEventHandler> logger)
+        public CheckDeviceAlertsEventHandler(IApplicationDbContext context, ILogger<CheckDeviceAlertsEventHandler> logger, IMediator mediator)
         {
             _context = context;
             _logger = logger;
+            _mediator = mediator;
         }
 
         public async Task Handle(SensorDataRecordedEvent notification, CancellationToken cancellationToken)
@@ -90,16 +93,15 @@ namespace ServerMonitorApp.Application.Features.Alerts.EventHandlers
 
                     _logger.LogWarning("Đã tự động tạo {Count} cảnh báo mới cho thiết bị {DeviceName} (ID: {DeviceId})", alertsToCreate.Count, device.Name, device.Id);
 
-                    // ==========================================
-                    // TODO:
-                    // Tại đây có thể tiếp tục thêm một Event khác (ví dụ: DeviceAlertTriggeredEvent)
-                    // Để kích hoạt việc Gửi Email, Gửi SMS, hoặc đẩy chuông báo động,...
-                    // ==========================================
+                    foreach (Alert? alert in alertsToCreate)
+                    {
+                        await _mediator.Publish(new DeviceAlertTriggeredEvent(alert), cancellationToken);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Xảy ra lỗi trong hệ thống chạy ngầm khi kiểm tra ngưỡng cảnh báo cho DeviceId: {DeviceId}", notification.DeviceId);
+                _logger.LogError(ex, "Xảy ra lỗi trong hệ thống khi kiểm tra ngưỡng cảnh báo cho DeviceId: {DeviceId}", notification.DeviceId);
             }
         }
 

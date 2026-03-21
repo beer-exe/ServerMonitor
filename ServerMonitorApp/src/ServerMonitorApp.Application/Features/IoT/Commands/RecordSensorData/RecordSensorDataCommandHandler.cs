@@ -46,8 +46,6 @@ namespace ServerMonitorApp.Application.Features.IoT.Commands.RecordSensorData
 
             _context.SensorDatas.Add(sensorData);
 
-            // TODO: Kích hoạt sự kiện kiểm tra ngưỡng cảnh báo (Alerts) tại đây
-
             await _context.SaveChangesAsync(cancellationToken);
 
             await _mediator.Publish(new SensorDataRecordedEvent(request.DeviceId, sensorData.Id, request.Temperature, request.Humidity), cancellationToken);
