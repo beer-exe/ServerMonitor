@@ -11,7 +11,7 @@ namespace ServerMonitorApp.Application.Features.Alerts.Commands.ResolveAlert
         [JsonIgnore]
         public Guid UserId { get; set; }
         [JsonIgnore]
-        public string Role { get; set; } = null!;
+        public string? Role { get; set; } = null!;
 
         public string ResolutionNote { get; set; } = null!;
     }
