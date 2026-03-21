@@ -8,9 +8,9 @@ namespace ServerMonitorApp.Application.Features.Alerts.Queries.GetAlerts
     public class GetAlertsQuery : IRequest<PagedResponse<IEnumerable<AlertDto>>>
     {
         [JsonIgnore]
-        public Guid UserId { get; set; }
+        public Guid? UserId { get; set; }
         [JsonIgnore]
-        public string Role { get; set; } = null!;
+        public string? Role { get; set; } = null!;
 
         public Guid? RoomId { get; set; }
         public string? Severity { get; set; }
