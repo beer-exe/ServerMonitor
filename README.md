@@ -4,7 +4,7 @@ Server Monitor App là một hệ thống backend API được xây dựng trên
 
 ---
 
-## 🚀 Các tính năng chính
+## Các tính năng chính
 
 * **Quản lý dữ liệu IoT theo thời gian thực:**
     * Tiếp nhận dữ liệu nhiệt độ, độ ẩm từ các thiết bị IoT.
@@ -13,7 +13,7 @@ Server Monitor App là một hệ thống backend API được xây dựng trên
     * Tự động phát hiện và sinh cảnh báo khi nhiệt độ/độ ẩm vượt ngưỡng (Warning/Critical).
     * Background Worker (`DeviceStatusMonitorWorker`) chạy ngầm định kỳ kiểm tra và phát hiện các thiết bị mất kết nối (Offline).
     * Gửi thông báo cảnh báo tức thời qua **SignalR** và **Email** (sử dụng MailKit).
-    * Quy trình tiếp nhận và xử lý sự cố (Resolve Alert).
+    * Tiếp nhận và xử lý sự cố (Resolve Alert).
 * **Xác thực và Phân quyền (Auth & Access Control):**
     * Xác thực người dùng bằng **JWT Token** (hỗ trợ Access Token và Refresh Token).
     * Mã hóa mật khẩu an toàn với **BCrypt**.
@@ -26,13 +26,13 @@ Server Monitor App là một hệ thống backend API được xây dựng trên
 
 ---
 
-## 🛠 Công nghệ & Kiến trúc
+## Công nghệ & Kiến trúc
 
 Dự án được cấu trúc theo **Clean Architecture** để đảm bảo tính độc lập, dễ bảo trì và mở rộng.
 
 * **Framework:** .NET 8 (ASP.NET Core Web API)
 * **Kiến trúc:** Clean Architecture, CQRS Pattern
-* **Thư viện/Công cụ cốt lõi:**
+* **Thư viện/Công cụ được sử dụng:**
     * **MediatR:** Triển khai CQRS (Command/Query Responsibility Segregation).
     * **Entity Framework Core (PostgreSQL):** ORM thao tác với cơ sở dữ liệu.
     * **FluentValidation:** Validate dữ liệu đầu vào tự động thông qua Pipeline Behavior.
@@ -42,7 +42,7 @@ Dự án được cấu trúc theo **Clean Architecture** để đảm bảo tí
 
 ---
 
-## 📂 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```text
 ServerMonitorApp.sln
@@ -56,32 +56,45 @@ ServerMonitorApp.sln
     └── ServerMonitorApp.UnitTests/        # Test chức năng từng thành phần (Handlers, Validators)
 ```
 
-## ⚙️ Hướng dẫn cài đặt và chạy ứng dụng
+## Hướng dẫn cài đặt và chạy ứng dụng
 
 ### 1. Yêu cầu hệ thống
 * [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 * [PostgreSQL](https://www.postgresql.org/download/)
+* [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/).
 
 ### 2. Cấu hình môi trường
 Đổi tên file `appsettings.Example.json` trong project `ServerMonitorApp.API` thành `appsettings.json` và cập nhật các thông số cho phù hợp với môi trường của bạn:
 
 ```json
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=server_monitor_db;Username=postgres;Password=yourpassword"
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
   },
+  "AllowedHosts": "*",
+
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=<DB_HOST>:<DB_PORT>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
+  },
+
   "JwtSettings": {
-    "SecretKey": "YOUR_SUPER_SECRET_KEY_HERE",
+    "SecretKey": "<YOUR_SECRET_KEY>",
     "Issuer": "ServerMonitorApp.API",
     "Audience": "ServerMonitorApp.Client",
-    "ExpirationMinutes": 60,
+    "ExpirationMinutes": 10,
     "RefreshTokenExpirationDays": 7
   },
+
   "EmailSettings": {
     "SmtpServer": "smtp.gmail.com",
     "SmtpPort": "587",
-    "SmtpUser": "your-email@gmail.com",
-    "SmtpPass": "your-app-password"
+    "SmtpUser": "<YOUR_EMAIL@gmail.com>",
+    "SmtpPass": "<YOUR_APP_PASSWORD>",
+    "FromEmail": "no-reply@servermonitor.com",
+    "FromName": "Server Monitor System"
   }
 }
 ```
@@ -90,7 +103,16 @@ ServerMonitorApp.sln
 Mở terminal tại thư mục root của solution và chạy lệnh sau để khởi tạo cơ sở dữ liệu:
 
 ```bash
+# (Tùy chọn) Cài đặt công cụ EF Core nếu máy bạn chưa có
+dotnet tool install --global dotnet-ef --version 8.
+
+# Di chuyển vào thư mục project API (nơi chứa cấu hình DbContext)
 cd src/ServerMonitorApp.API
+
+# Tạo file migration đầu tiên để khởi tạo cấu trúc các bảng trong Database
+dotnet ef migrations add InitialCreate
+
+# Cập nhật Database dựa trên Migrations vừa tạo
 dotnet ef database update
 ```
 
