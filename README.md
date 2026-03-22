@@ -110,10 +110,13 @@ dotnet tool install --global dotnet-ef --version 8.
 cd src/ServerMonitorApp.API
 
 # Tạo file migration đầu tiên để khởi tạo cấu trúc các bảng trong Database
-dotnet ef migrations add InitialCreate
+dotnet ef migrations add InitialCreate --project ../ServerMonitorApp.Infrastructure --startup-project .
 
 # Cập nhật Database dựa trên Migrations vừa tạo
-dotnet ef database update
+dotnet ef database update --project ../ServerMonitorApp.Infrastructure --startup-project .
+
+# Nạp dữ liệu mẫu cho database
+dotnet run -- /seed
 ```
 
 ### 4. Khởi chạy ứng dụng
