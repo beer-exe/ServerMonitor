@@ -126,4 +126,4 @@ Chạy lệnh sau để khởi động API:
 dotnet run --project src/ServerMonitorApp.API
 ```
 
-Ứng dụng sẽ chạy tại Swagger UI: https://localhost:5269/swagger
+Ứng dụng sẽ chạy tại Swagger UI: http://localhost:5269/swagger
