@@ -21,7 +21,7 @@ namespace ServerMonitorApp.Infrastructure.Persistence
             Guid device2Id = Guid.NewGuid();
             Guid device3Id = Guid.NewGuid();
 
-            DateTime now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+            DateTime now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
             if (!await context.Users.AnyAsync())
             {
@@ -146,12 +146,13 @@ namespace ServerMonitorApp.Infrastructure.Persistence
             if (!await context.SensorDatas.AnyAsync())
             {
                 List<SensorData>? sensorDatas = new List<SensorData>();
+                long sensorDataId = 1;
 
                 for (int i = 5; i >= 0; i--)
                 {
                     sensorDatas.Add(new SensorData
                     {
-                        Id = 1,
+                        Id = sensorDataId++,
                         DeviceId = device1Id,
                         Temperature = 26.5m + (decimal)(new Random().NextDouble() * 2),
                         Humidity = 45.0m + (decimal)(new Random().NextDouble() * 5),
