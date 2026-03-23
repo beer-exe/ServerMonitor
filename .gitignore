@@ -93,3 +93,7 @@ TestResults/
 
 # Repomix
 repomix-output.xml
+
+# React build output
+dist/
+dist-ssr/
