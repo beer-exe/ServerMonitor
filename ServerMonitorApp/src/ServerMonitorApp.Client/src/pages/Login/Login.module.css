@@ -1,0 +1,82 @@
+@reference "tailwindcss";
+
+.container {
+  @apply min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8;
+  background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+}
+
+.logoWrapper {
+  @apply flex justify-center;
+}
+
+.logoBg {
+  @apply rounded-full bg-indigo-100 p-3 shadow-sm border border-indigo-200;
+}
+
+.logoIcon {
+  @apply w-10 h-10 text-indigo-600;
+}
+
+.title {
+  @apply mt-4 text-center text-3xl font-extrabold text-slate-900 tracking-tight;
+}
+
+.subtitle {
+  @apply mt-2 text-center text-sm text-slate-600;
+}
+
+.formContainer {
+  @apply mt-8 sm:mx-auto sm:w-full sm:max-w-md;
+}
+
+.formCard {
+  @apply bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-2xl sm:px-10 border border-slate-100;
+}
+
+.errorAlert {
+  @apply mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md flex items-center;
+}
+
+.errorIcon {
+  @apply h-5 w-5 text-red-500 mr-2;
+}
+
+.errorText {
+  @apply text-sm text-red-700 font-medium;
+}
+
+.inputLabel {
+  @apply block text-sm font-medium text-slate-700;
+}
+
+.inputWrapper {
+  @apply mt-1 relative rounded-md shadow-sm;
+}
+
+.inputIconWrapper {
+  @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
+}
+
+.inputIcon {
+  @apply h-5 w-5 text-slate-400;
+}
+
+.inputField {
+  @apply block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors bg-slate-50 focus:bg-white;
+}
+
+.submitBtn {
+  @apply w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white transition-all;
+}
+
+.submitBtnActive {
+  @apply bg-indigo-600 hover:bg-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+}
+
+.submitBtnDisabled {
+  @apply bg-indigo-400 cursor-not-allowed;
+}
+
+.spinner {
+  @apply animate-spin -ml-1 mr-2 h-4 w-4 text-white;
+}
