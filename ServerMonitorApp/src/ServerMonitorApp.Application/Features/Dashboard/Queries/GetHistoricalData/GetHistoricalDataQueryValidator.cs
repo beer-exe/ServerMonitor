@@ -11,7 +11,7 @@ namespace ServerMonitorApp.Application.Features.Dashboard.Queries.GetHistoricalD
             RuleFor(x => x.EndTime).NotEmpty().WithMessage("Thời gian kết thúc không hợp lệ.");
 
             RuleFor(x => x)
-                .Must(x => x.StartTime < x.EndTime).WithMessage("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.")
+                .Must(x => x.StartTime <= x.EndTime).WithMessage("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.")
                 .Must(x => (x.EndTime - x.StartTime).TotalDays <= 30).WithMessage("Khoảng thời gian truy xuất không được vượt quá 30 ngày.");
 
             RuleFor(x => x.PageNumber)

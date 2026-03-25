@@ -23,7 +23,7 @@ namespace ServerMonitorApp.Application.Features.Dashboard.Queries.GetHistoricalD
             if (device == null)
             {
                 throw new ApiException("Thiết bị không tồn tại.");
-            }    
+            }
 
             if (request.Role != "ADMIN")
             {
@@ -32,12 +32,20 @@ namespace ServerMonitorApp.Application.Features.Dashboard.Queries.GetHistoricalD
                 if (!hasAccess)
                 {
                     throw new UnauthorizedAccessException("Bạn không có quyền xem dữ liệu của thiết bị này.");
-                }    
+                }
+            }
+
+            DateTime effectiveStartTime = request.StartTime;
+            DateTime effectiveEndTime = request.EndTime;
+
+            if (request.StartTime == request.EndTime)
+            {
+                effectiveEndTime = request.EndTime.AddMinutes(1).AddTicks(-1);
             }
 
             IQueryable<SensorData>? query = _context.SensorDatas
                 .AsNoTracking()
-                .Where(s => s.DeviceId == request.DeviceId && s.Timestamp >= request.StartTime && s.Timestamp <= request.EndTime);
+                .Where(s => s.DeviceId == request.DeviceId && s.Timestamp >= effectiveStartTime && s.Timestamp <= effectiveEndTime);
 
             int totalRecords = await query.CountAsync(cancellationToken);
 
