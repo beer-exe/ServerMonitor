@@ -7,7 +7,8 @@ import Login from './pages/Login/Login';
 import Rooms from './pages/Rooms/Rooms';
 import Devices from './pages/Devices/Devices';
 
-const Dashboard = () => <div className="p-4 bg-white shadow rounded-lg">Trang Dashboard Tổng quan</div>;
+import Dashboard from './pages/Dashboard';
+
 const Unauthorized = () => <div className="text-red-500 font-bold">Bạn không có quyền truy cập trang này.</div>;
 
 const App: React.FC = () => {
@@ -21,7 +22,9 @@ const App: React.FC = () => {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              
               <Route path="/dashboard" element={<Dashboard />} />
+              
               <Route path="/rooms" element={<Rooms />} />
               <Route path="/devices" element={<Devices />} />
               <Route path="/alerts" element={<div>Lịch sử Cảnh báo</div>} />
