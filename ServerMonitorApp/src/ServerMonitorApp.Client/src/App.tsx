@@ -4,9 +4,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './layouts/MainLayout/MainLayout';
 import Login from './pages/Login/Login';
+import Rooms from './pages/Rooms/Rooms';
+import Devices from './pages/Devices/Devices';
 
 const Dashboard = () => <div className="p-4 bg-white shadow rounded-lg">Trang Dashboard Tổng quan</div>;
-const Rooms = () => <div className="p-4 bg-white shadow rounded-lg">Danh sách Phòng Server</div>;
 const Unauthorized = () => <div className="text-red-500 font-bold">Bạn không có quyền truy cập trang này.</div>;
 
 const App: React.FC = () => {
@@ -22,7 +23,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/rooms" element={<Rooms />} />
-              <Route path="/devices" element={<div>Quản lý Thiết bị</div>} />
+              <Route path="/devices" element={<Devices />} />
               <Route path="/alerts" element={<div>Lịch sử Cảnh báo</div>} />
               
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
