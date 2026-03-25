@@ -66,8 +66,8 @@ namespace ServerMonitorApp.API.Controllers
                 DeviceId = deviceId,
                 UserId = userId,
                 Role = role ?? "USER",
-                StartTime = startTime,
-                EndTime = endTime,
+                StartTime = DateTime.SpecifyKind(startTime, DateTimeKind.Unspecified),
+                EndTime = DateTime.SpecifyKind(endTime, DateTimeKind.Unspecified),
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };

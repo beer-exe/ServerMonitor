@@ -30,7 +30,7 @@ namespace ServerMonitorApp.API.HostedServices
                     _logger.LogError(ex, "Lỗi xảy ra khi kích hoạt CheckOfflineDevicesCommand.");
                 }
 
-                await Task.Delay(5000, stoppingToken);
+                await Task.Delay(60000, stoppingToken);
             }
         }
     }
