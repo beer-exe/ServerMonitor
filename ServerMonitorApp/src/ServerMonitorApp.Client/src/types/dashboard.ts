@@ -1,7 +1,6 @@
 export interface DashboardDeviceDto {
   id: string;
   name: string;
-  macAddress: string;
   currentTemperature: number;
   currentHumidity: number;
   lastSeen: string;

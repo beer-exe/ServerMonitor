@@ -22,7 +22,6 @@ export interface Room {
 export interface Device {
   id: string;
   name: string;
-  macAddress: string;
   roomId: string | null;
   roomName?: string;
   isActive: boolean;

@@ -26,7 +26,6 @@ const DeviceCard = React.memo(({
   return (
     <div className={`${styles.deviceCard} ${getStatusClass(device.status)}`}>
       <h3 className={styles.deviceName}>{device.name}</h3>
-      <p className={styles.deviceMac}>{device.macAddress}</p>
       
       <div className={styles.statsRow}>
         <div className={styles.statBox}>
