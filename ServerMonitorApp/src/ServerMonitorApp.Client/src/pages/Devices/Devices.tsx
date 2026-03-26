@@ -3,6 +3,7 @@ import { deviceService } from '../../services/deviceService';
 import { roomService } from '../../services/roomService';
 import type { Device, Room } from '../../types';
 import styles from './Devices.module.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 const defaultFormState = {
   name: '',
@@ -15,6 +16,7 @@ const defaultFormState = {
 };
 
 const Devices: React.FC = () => {
+  const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +102,9 @@ const Devices: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Quản lý Thiết bị IoT</h2>
-        <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm thiết bị</button>
+        {user?.Role === 'ADMIN' && (
+          <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm thiết bị</button>
+        )}
       </div>
 
       <div className={styles.tableWrapper}>
@@ -112,7 +116,9 @@ const Devices: React.FC = () => {
                 <th className={styles.th}>Phòng Server</th>
                 <th className={styles.thCenter}>Trạng thái</th>
                 <th className={styles.thCenter}>Cảnh báo (Nhiệt/Ẩm)</th>
-                <th className={styles.thRight}>Thao tác</th>
+                {user?.Role === 'ADMIN' && (
+                  <th className={styles.thRight}>Thao tác</th>
+                )}
               </tr>
             </thead>
             <tbody className={styles.tbody}>
@@ -138,10 +144,12 @@ const Devices: React.FC = () => {
                       <span className="text-orange-600 font-medium">{dev.temperatureWarningThreshold}°C</span> / <span className="text-blue-600 font-medium">{dev.humidityWarningThreshold}%</span>
                     </span>
                   </td>
-                  <td className={styles.tdRight}>
-                    <button onClick={() => openModal(dev)} className={styles.editBtn}>Sửa</button>
-                    <button onClick={() => handleDelete(dev.id)} className={styles.deleteBtn}>Xóa</button>
-                  </td>
+                  {user?.Role === 'ADMIN' && (
+                    <td className={styles.tdRight}>
+                      <button onClick={() => openModal(dev)} className={styles.editBtn}>Sửa</button>
+                      <button onClick={() => handleDelete(dev.id)} className={styles.deleteBtn}>Xóa</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

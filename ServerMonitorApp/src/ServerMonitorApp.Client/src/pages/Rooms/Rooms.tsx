@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { roomService } from '../../services/roomService';
 import type { Room } from '../../types';
 import styles from './Rooms.module.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Rooms: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,7 +69,9 @@ const Rooms: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Quản lý Phòng Server</h2>
-        <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm phòng mới</button>
+        {user?.Role === 'ADMIN' && (
+          <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm phòng mới</button>
+        )}
       </div>
 
       <div className={styles.tableWrapper}>
@@ -77,7 +81,9 @@ const Rooms: React.FC = () => {
               <tr>
                 <th className={styles.th}>Tên phòng</th>
                 <th className={styles.th}>Vị trí</th>
-                <th className={styles.thRight}>Thao tác</th>
+                {user?.Role === 'ADMIN' && (
+                  <th className={styles.thRight}>Thao tác</th>
+                )}
               </tr>
             </thead>
             <tbody className={styles.tbody}>
@@ -87,10 +93,12 @@ const Rooms: React.FC = () => {
                 <tr key={room.id} className={styles.tr}>
                   <td className={`${styles.td} ${styles.tdText}`}>{room.name}</td>
                   <td className={`${styles.td} ${styles.tdSubText}`}>{room.location}</td>
-                  <td className={styles.tdActions}>
-                    <button onClick={() => openModal(room)} className={styles.editBtn}>Sửa</button>
-                    <button onClick={() => handleDelete(room.id)} className={styles.deleteBtn}>Xóa</button>
-                  </td>
+                  {user?.Role === 'ADMIN' && (
+                    <td className={styles.tdActions}>
+                      <button onClick={() => openModal(room)} className={styles.editBtn}>Sửa</button>
+                      <button onClick={() => handleDelete(room.id)} className={styles.deleteBtn}>Xóa</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
