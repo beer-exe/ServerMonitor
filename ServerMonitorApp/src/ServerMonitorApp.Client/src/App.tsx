@@ -7,7 +7,7 @@ import Login from './pages/Login/Login';
 import Rooms from './pages/Rooms/Rooms';
 import Devices from './pages/Devices/Devices';
 
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 const Unauthorized = () => <div className="text-red-500 font-bold">Bạn không có quyền truy cập trang này.</div>;
 

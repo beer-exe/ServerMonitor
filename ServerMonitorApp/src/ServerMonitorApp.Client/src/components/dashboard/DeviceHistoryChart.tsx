@@ -3,9 +3,10 @@ import { dashboardService } from '../../services/dashboardService';
 import type { ChartDataPointDto } from '../../types/dashboard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// IMPORT ANT DESIGN
 import { DatePicker } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+
+import styles from './DeviceHistoryChart.module.css';
 
 interface DeviceHistoryChartProps {
   deviceId: string;
@@ -17,7 +18,6 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dùng dayjs cho Ant Design
   const [startTime, setStartTime] = useState<Dayjs>(dayjs().subtract(24, 'hour'));
   const [endTime, setEndTime] = useState<Dayjs>(dayjs());
   
@@ -33,7 +33,6 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
       setLoading(true);
       setError(null);
 
-      // Chuyển Dayjs object về chuẩn ISO string (UTC) cho Backend C#
       const result = await dashboardService.getHistoricalData(
         deviceId,
         startTime.toISOString(),
@@ -55,13 +54,12 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-bold mb-4">Lịch sử hoạt động của thiết bị</h3>
+    <div className={styles.container}>
+      <h3 className={styles.title}>Lịch sử hoạt động của thiết bị</h3>
 
-      {/* SỬ DỤNG BỘ CHỌN THỜI GIAN CỦA ANT DESIGN */}
-      <div className="flex gap-4 mb-4 items-center">
-        <div className="flex flex-col">
-          <label className="text-sm font-medium mb-1">Từ thời điểm:</label>
+      <div className={styles.filtersWrapper}>
+        <div className={styles.filterBlock}>
+          <label className={styles.filterLabel}>Từ thời điểm:</label>
           <DatePicker 
             showTime={{ format: 'HH:mm' }} 
             format="DD/MM/YYYY HH:mm"
@@ -72,13 +70,13 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
                 setPageNumber(1);
               }
             }}
-            className="h-[42px] w-[220px]"
+            className={styles.datePicker}
             allowClear={false}
           />
         </div>
         
-        <div className="flex flex-col">
-          <label className="text-sm font-medium mb-1">Đến thời điểm:</label>
+        <div className={styles.filterBlock}>
+          <label className={styles.filterLabel}>Đến thời điểm:</label>
           <DatePicker 
             showTime={{ format: 'HH:mm' }} 
             format="DD/MM/YYYY HH:mm"
@@ -89,25 +87,24 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
                 setPageNumber(1);
               }
             }}
-            className="h-[42px] w-[220px]"
+            className={styles.datePicker}
             allowClear={false}
           />
         </div>
       </div>
 
-      {loading && <p className="text-blue-500 font-medium">Đang tải dữ liệu biểu đồ...</p>}
-      {error && <p className="text-red-500 font-medium">{error}</p>}
+      {loading && <p className={styles.loadingText}>Đang tải dữ liệu biểu đồ...</p>}
+      {error && <p className={styles.errorText}>{error}</p>}
       {!loading && !error && data.length === 0 && (
-        <p className="text-gray-500 italic">Không có dữ liệu cảm biến trong khoảng thời gian này.</p>
+        <p className={styles.emptyText}>Không có dữ liệu cảm biến trong khoảng thời gian này.</p>
       )}
 
       {!loading && data.length > 0 && (
-        <div className="h-64 w-full mt-4">
+        <div className={styles.chartWrapper}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" />
               
-              {/* TRỤC X: Tự động cộng 7 tiếng nhờ thêm đuôi 'Z' */}
               <XAxis 
                 dataKey="timestamp" 
                 tickFormatter={(timeStr) => {
@@ -121,7 +118,6 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
               />
               <YAxis />
               
-              {/* TOOLTIP: Tự động cộng 7 tiếng nhờ thêm đuôi 'Z' */}
               <Tooltip 
                 labelFormatter={(label) => {
                   const utcTimeStr = label.endsWith('Z') ? label : `${label}Z`;
@@ -138,25 +134,24 @@ const DeviceHistoryChart: React.FC<DeviceHistoryChartProps> = ({ deviceId }) => 
         </div>
       )}
 
-      {/* Phân trang */}
-      <div className="flex justify-between items-center mt-6">
+      <div className={styles.paginationWrapper}>
         <button 
           onClick={() => setPageNumber(prev => Math.max(prev - 1, 1))}
           disabled={pageNumber <= 1 || loading}
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300 transition-colors"
+          className={styles.btnPrev}
         >
           Trang trước
         </button>
         
-        <span className="font-medium text-gray-700">
+        <span className={styles.pageInfo}>
           Trang {pageNumber} / {totalPages} 
-          <span className="text-sm text-gray-500 ml-2">({totalRecords} bản ghi)</span>
+          <span className={styles.totalRecords}>({totalRecords} bản ghi)</span>
         </span>
 
         <button 
           onClick={() => setPageNumber(prev => prev + 1)}
           disabled={pageNumber >= totalPages || loading} 
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
+          className={styles.btnNext}
         >
           Trang tiếp
         </button>
