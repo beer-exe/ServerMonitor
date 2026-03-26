@@ -30,3 +30,16 @@ export interface Device {
   humidityWarningThreshold: number;
   humidityCriticalThreshold: number;
 }
+
+export interface AlertDto {
+  id: number;
+  roomId: string | null;
+  roomName: string | null;
+  deviceId: string | null;
+  deviceName: string | null;
+  message: string;
+  severity: string;
+  isResolved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
