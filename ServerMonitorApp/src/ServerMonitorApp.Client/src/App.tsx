@@ -9,6 +9,7 @@ import Devices from './pages/Devices/Devices';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Alerts from './pages/Alerts/Alerts';
 import Users from './pages/Users/Users';
+import AccessControl from './pages/AccessControl/AccessControl';
 
 const Unauthorized = () => <div className="text-red-500 font-bold">Bạn không có quyền truy cập trang này.</div>;
 
@@ -34,6 +35,12 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="/users" element={<Users />} />
               </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/users" element={<Users />} />
+                <Route path="/access" element={<AccessControl />} />
+              </Route>
+
             </Route>
           </Route>
 

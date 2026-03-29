@@ -52,3 +52,12 @@ export interface UserItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UserRoomAccessDto {
+  userId: string;
+  roomId: string;
+  userName: string;
+  roomName: string;
+  receiveAlerts: boolean;
+  updatedAt: string;
+}

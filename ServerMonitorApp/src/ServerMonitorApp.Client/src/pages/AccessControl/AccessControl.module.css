@@ -1,0 +1,21 @@
+@reference "tailwindcss";
+
+.container {
+  @apply space-y-6;
+}
+
+.header {
+  @apply flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-slate-200 pb-4;
+}
+
+.title {
+  @apply text-2xl font-bold text-slate-800;
+}
+
+.selectUserContainer {
+  @apply flex items-center space-x-3 bg-slate-50 p-4 rounded-lg border border-slate-200;
+}
+
+.selectLabel {
+  @apply font-semibold text-slate-700 whitespace-nowrap;
+}
