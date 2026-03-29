@@ -39,7 +39,10 @@ namespace ServerMonitorApp.UnitTests.Features.Devices.Queries
             await context.SaveChangesAsync();
 
             GetDevicesQueryHandler? handler = new GetDevicesQueryHandler(context);
-            GetDevicesQuery? query = new GetDevicesQuery();
+            GetDevicesQuery? query = new GetDevicesQuery()
+            {
+                Role = "ADMIN"
+            };
 
             Response<IEnumerable<DeviceDto>>? result = await handler.Handle(query, CancellationToken.None);
 

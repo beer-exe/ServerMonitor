@@ -31,7 +31,10 @@ namespace ServerMonitorApp.UnitTests.Features.Rooms.Queries
             await _dbContext.SaveChangesAsync();
 
             GetRoomsQueryHandler? handler = new GetRoomsQueryHandler(_dbContext);
-            GetRoomsQuery? query = new GetRoomsQuery();
+            GetRoomsQuery? query = new GetRoomsQuery()
+            {
+                Role = "ADMIN",
+            };
 
             Response<IEnumerable<RoomDto>>? response = await handler.Handle(query, CancellationToken.None);
 
@@ -53,7 +56,11 @@ namespace ServerMonitorApp.UnitTests.Features.Rooms.Queries
             await _dbContext.SaveChangesAsync();
 
             GetRoomsQueryHandler? handler = new GetRoomsQueryHandler(_dbContext);
-            GetRoomsQuery? query = new GetRoomsQuery { SearchTerm = "Server" };
+            GetRoomsQuery? query = new GetRoomsQuery 
+            { 
+                Role = "ADMIN", 
+                SearchTerm = "Server" 
+            };
 
             Response<IEnumerable<RoomDto>>? response = await handler.Handle(query, CancellationToken.None);
 
