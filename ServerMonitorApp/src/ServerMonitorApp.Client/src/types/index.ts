@@ -43,3 +43,12 @@ export interface AlertDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UserItem {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}

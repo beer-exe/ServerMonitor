@@ -1,0 +1,13 @@
+@reference "tailwindcss";
+
+.container {
+  @apply space-y-6;
+}
+
+.header {
+  @apply flex justify-between items-center;
+}
+
+.title {
+  @apply text-2xl font-bold text-slate-800;
+}
