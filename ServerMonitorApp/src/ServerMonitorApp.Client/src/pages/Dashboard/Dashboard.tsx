@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Button, Typography, Tag, Space, Modal, Spin, Empty, Tooltip, Row, Col } from 'antd';
+import { LineChartOutlined, DashboardOutlined } from '@ant-design/icons';
 import { dashboardService } from '../../services/dashboardService';
 import type { DashboardRoomDto, DashboardDeviceDto } from '../../types/dashboard';
 import { useSignalR } from '../../hooks/useSignalR';
 import DeviceHistoryChart from '../../components/dashboard/DeviceHistoryChart';
-
 import styles from './Dashboard.module.css';
+
+const { Title, Text } = Typography;
 
 const DeviceCard = React.memo(({ 
   device, 
@@ -13,62 +16,128 @@ const DeviceCard = React.memo(({
   device: DashboardDeviceDto; 
   onOpenChart: (id: string) => void 
 }) => {
-  const getStatusClass = (status: string) => {
+  const [isFlashing, setIsFlashing] = useState(false);
+
+  useEffect(() => {
+    setIsFlashing(true);
+    const timer = setTimeout(() => setIsFlashing(false), 1000);
+    return () => clearTimeout(timer);
+  }, [device.lastSeen]);
+
+  const getStatusConfig = (dev: DashboardDeviceDto) => {
+    let status = 'NORMAL';
+    
+    if (dev.isOffline) {
+      status = 'OFFLINE';
+    } else {
+      const temp = dev.currentTemperature ?? 0;
+      const hum = dev.currentHumidity ?? 0;
+      
+      const isCritical = 
+        (dev.criticalTemp != null && temp >= dev.criticalTemp) || 
+        (dev.criticalHumidity != null && hum >= dev.criticalHumidity);
+        
+      const isWarning = 
+        (dev.warningTemp != null && temp >= dev.warningTemp) || 
+        (dev.warningHumidity != null && hum >= dev.warningHumidity);
+        
+      if (isCritical) status = 'DANGER';
+      else if (isWarning) status = 'WARNING';
+    }
+
     switch (status) {
-      case 'Normal': return styles.statusNormal;
-      case 'Warning': return styles.statusWarning;
-      case 'Danger': return styles.statusDanger;
-      case 'Offline':
-      default: return styles.statusOffline;
+      case 'NORMAL': return { color: 'success', text: 'Bình thường', bgColor: 'bg-green-50', iconColor: 'text-green-500' };
+      case 'WARNING': return { color: 'warning', text: 'Cảnh báo', bgColor: 'bg-yellow-50', iconColor: 'text-yellow-500' };
+      case 'DANGER': return { color: 'error', text: 'Nguy hiểm', bgColor: 'bg-red-50', iconColor: 'text-red-500' };
+      case 'OFFLINE':
+      default: return { color: 'default', text: 'Mất kết nối', bgColor: 'bg-slate-50', iconColor: 'text-slate-400' };
     }
   };
 
-  return (
-    <div className={`${styles.deviceCard} ${getStatusClass(device.status)}`}>
-      <h3 className={styles.deviceName}>{device.name}</h3>
-      
-      <div className={styles.statsRow}>
-        <div className={styles.statBox}>
-          <p className={styles.statLabel}>Nhiệt độ</p>
-          <p className={styles.tempValue}>
-            {device.currentTemperature != null ? device.currentTemperature.toFixed(1) : '-- '}°C
-          </p>
-        </div>
-        <div className={styles.statBox}>
-          <p className={styles.statLabel}>Độ ẩm</p>
-          <p className={styles.humValue}>
-            {device.currentHumidity != null ? device.currentHumidity.toFixed(1) : '-- '}%
-          </p>
-        </div>
-      </div>
+  const statusConfig = getStatusConfig(device);
 
-      <div className={styles.cardFooter}>
-        <span className={styles.updateText}>
-          Cập nhật: {new Date(device.lastSeen).toLocaleTimeString()}
-        </span>
-        <button 
-          onClick={() => onOpenChart(device.id)}
-          className={styles.btnChart}
-        >
-          Xem biểu đồ
-        </button>
+  return (
+    <Card 
+      hoverable 
+      className={`shadow-sm border-2 transition-all duration-500 ${statusConfig.bgColor} ${
+        isFlashing ? 'border-indigo-400 shadow-indigo-200/50 scale-[1.02]' : 'border-transparent'
+      }`}
+      bodyStyle={{ padding: '16px' }}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center space-x-2">
+          <DashboardOutlined className={`text-xl ${statusConfig.iconColor}`} />
+          <Title level={5} className="!mb-0 !mt-0 truncate max-w-[150px]" title={device.name}>
+            {device.name}
+          </Title>
+        </div>
+        <Tag color={statusConfig.color} className="m-0 font-medium">
+          {statusConfig.text}
+        </Tag>
       </div>
-    </div>
+      
+      <Row gutter={16} className="mb-4">
+        <Col span={12}>
+          <div className="bg-white p-3 rounded-lg border border-slate-100 text-center shadow-sm">
+            <Text type="secondary" className="text-xs font-semibold uppercase tracking-wider">Nhiệt độ</Text>
+            <div className={`text-xl font-bold mt-1 ${
+              (device.criticalTemp && device.currentTemperature >= device.criticalTemp) ? 'text-red-600' : 
+              (device.warningTemp && device.currentTemperature >= device.warningTemp) ? 'text-yellow-600' : 
+              'text-slate-800'
+            }`}>
+              {device.currentTemperature != null ? device.currentTemperature.toFixed(1) : '-- '}°C
+            </div>
+          </div>
+        </Col>
+        <Col span={12}>
+          <div className="bg-white p-3 rounded-lg border border-slate-100 text-center shadow-sm">
+            <Text type="secondary" className="text-xs font-semibold uppercase tracking-wider">Độ ẩm</Text>
+            <div className={`text-xl font-bold mt-1 ${
+               (device.criticalHumidity && device.currentHumidity >= device.criticalHumidity) ? 'text-red-600' : 
+               (device.warningHumidity && device.currentHumidity >= device.warningHumidity) ? 'text-yellow-600' : 
+               'text-slate-800'
+            }`}>
+              {device.currentHumidity != null ? device.currentHumidity.toFixed(1) : '-- '}%
+            </div>
+          </div>
+        </Col>
+      </Row>
+
+      <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">
+        <Tooltip title={device.lastSeen ? new Date(device.lastSeen).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}>
+          <Text type="secondary" className="text-xs italic">
+            Cập nhật: {device.lastSeen ? new Date(device.lastSeen).toLocaleTimeString('vi-VN') : '--'}
+          </Text>
+        </Tooltip>
+        <Button 
+          type="primary" 
+          ghost 
+          size="small" 
+          icon={<LineChartOutlined />} 
+          onClick={() => onOpenChart(device.id)}
+        >
+          Biểu đồ
+        </Button>
+      </div>
+    </Card>
   );
 });
 
 const Dashboard: React.FC = () => {
   const [rooms, setRooms] = useState<DashboardRoomDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   
   const { latestUpdate } = useSignalR(import.meta.env.VITE_API_URL + '/hubs/monitor');
 
   useEffect(() => {
+    setIsLoading(true);
     dashboardService.getDashboard()
       .then(data => {
         setRooms(Array.isArray(data) ? data : []);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -83,7 +152,7 @@ const Dashboard: React.FC = () => {
               currentTemperature: latestUpdate.temperature,
               currentHumidity: latestUpdate.humidity,
               lastSeen: latestUpdate.timestamp,
-              status: latestUpdate.status
+              isOffline: false
             } 
           : device
       )
@@ -94,43 +163,73 @@ const Dashboard: React.FC = () => {
     setSelectedDeviceId(id);
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spin size="large" tip="Đang tải dữ liệu giám sát..." />
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.container}>
-      <h1 className={styles.pageTitle}>Dashboard Giám Sát</h1>
-
-      {rooms.map(room => (
-        <div key={room.id} className={styles.roomWrapper}>
-          <h2 className={styles.roomTitle}>
-            {room.name}
-          </h2>
-          <p className={styles.roomDesc}>{room.description}</p>
-          
-          <div className={styles.gridContainer}>
-            {room.devices.map(device => (
-              <DeviceCard 
-                key={device.id} 
-                device={device} 
-                onOpenChart={handleOpenChart} 
-              />
-            ))}
-          </div>
+    <div className="p-6">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <Title level={2} className="!mb-1">Dashboard Giám Sát</Title>
+          <Text type="secondary">Theo dõi trạng thái môi trường các phòng Server theo thời gian thực</Text>
         </div>
-      ))}
+      </div>
 
-      {selectedDeviceId && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <button 
-              onClick={() => setSelectedDeviceId(null)}
-              className={styles.btnClose}
-            >
-              &times;
-            </button>
-            <h3 className={styles.modalTitle}>Lịch sử thiết bị</h3>
+      {rooms.length === 0 ? (
+        <div className="bg-white p-10 rounded-xl shadow-sm border border-slate-200 mt-6">
+          <Empty description={<span className="text-slate-500 text-lg">Hệ thống chưa có phòng hoặc thiết bị nào được thiết lập.</span>} />
+        </div>
+      ) : (
+        rooms.map(room => (
+          <div key={room.id} className="mb-8 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="mb-4 pb-3 border-b border-slate-100">
+              <Title level={4} className="!mb-1 text-indigo-800">{room.name}</Title>
+              {room.description && <Text type="secondary">{room.description}</Text>}
+            </div>
+            
+            {room.devices.length === 0 ? (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Phòng này chưa có thiết bị" />
+            ) : (
+              <Row gutter={[16, 16]}>
+                {room.devices.map(device => (
+                  <Col xs={24} sm={12} lg={8} xl={6} key={device.id}>
+                    <DeviceCard 
+                      device={device} 
+                      onOpenChart={handleOpenChart} 
+                    />
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </div>
+        ))
+      )}
+
+      <Modal
+        title={
+          <Space>
+            <LineChartOutlined className="text-indigo-600" />
+            <span>Lịch sử thông số thiết bị</span>
+          </Space>
+        }
+        open={!!selectedDeviceId}
+        onCancel={() => setSelectedDeviceId(null)}
+        footer={null}
+        width={800}
+        destroyOnClose
+        centered
+      >
+        {selectedDeviceId && (
+          <div className="pt-4">
             <DeviceHistoryChart deviceId={selectedDeviceId} />
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

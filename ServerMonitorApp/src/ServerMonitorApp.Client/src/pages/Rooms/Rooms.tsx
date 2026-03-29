@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, Form, Input, Space, message } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { roomService } from '../../services/roomService';
 import type { Room } from '../../types';
 import styles from './Rooms.module.css';
@@ -11,7 +13,8 @@ const Rooms: React.FC = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', location: '' });
+  
+  const [form] = Form.useForm();
 
   const fetchRooms = async () => {
     setIsLoading(true);
@@ -19,7 +22,7 @@ const Rooms: React.FC = () => {
       const data = await roomService.getRooms();
       setRooms(data);
     } catch (error) {
-      alert('Lỗi khi tải danh sách phòng!');
+      message.error('Lỗi khi tải danh sách phòng!');
     } finally {
       setIsLoading(false);
     }
@@ -30,106 +33,131 @@ const Rooms: React.FC = () => {
   const openModal = (room?: Room) => {
     if (room) {
       setEditingId(room.id);
-      setFormData({ name: room.name, location: room.location });
+      form.setFieldsValue({ name: room.name, location: room.location });
     } else {
       setEditingId(null);
-      setFormData({ name: '', location: '' });
+      form.resetFields();
     }
     setIsModalOpen(true);
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: { name: string, location: string }) => {
     try {
-      if (editingId) await roomService.updateRoom(editingId, formData);
-      else await roomService.createRoom(formData);
-      alert('Lưu thành công!');
+      if (editingId) await roomService.updateRoom(editingId, values);
+      else await roomService.createRoom(values);
+      
+      message.success('Lưu phòng thành công!');
       closeModal();
       fetchRooms();
-    } catch (error) {
-      alert('Lỗi khi lưu dữ liệu!');
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi lưu dữ liệu!');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Bạn có chắc muốn xóa phòng này?')) {
-      try {
-        await roomService.deleteRoom(id);
-        alert('Xóa thành công!');
-        fetchRooms();
-      } catch (error) {
-        alert('Lỗi khi xóa phòng!');
+  const handleDelete = (id: string) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa phòng này không?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await roomService.deleteRoom(id);
+          message.success('Xóa phòng thành công!');
+          fetchRooms();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Lỗi khi xóa phòng!');
+        }
       }
-    }
+    });
   };
+
+  const columns = [
+    {
+      title: 'Tên phòng',
+      dataIndex: 'name',
+      key: 'name',
+      className: 'font-medium text-slate-900',
+    },
+    {
+      title: 'Vị trí',
+      dataIndex: 'location',
+      key: 'location',
+      className: 'text-slate-600',
+    },
+    ...(user?.Role === 'ADMIN' ? [{
+      title: 'Thao tác',
+      key: 'action',
+      align: 'right' as const,
+      render: (_: any, record: Room) => (
+        <Space size="middle">
+          <Button type="text" className="text-indigo-600 hover:text-indigo-800" icon={<EditOutlined />} onClick={() => openModal(record)}>Sửa</Button>
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>Xóa</Button>
+        </Space>
+      ),
+    }] : []),
+  ];
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Quản lý Phòng Server</h2>
         {user?.Role === 'ADMIN' && (
-          <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm phòng mới</button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} size="large" className="bg-indigo-600">
+            Thêm phòng mới
+          </Button>
         )}
       </div>
 
-      <div className={styles.tableWrapper}>
-        <div className={styles.tableResponsive}>
-          <table className={styles.table}>
-            <thead className={styles.thead}>
-              <tr>
-                <th className={styles.th}>Tên phòng</th>
-                <th className={styles.th}>Vị trí</th>
-                {user?.Role === 'ADMIN' && (
-                  <th className={styles.thRight}>Thao tác</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className={styles.tbody}>
-              {isLoading ? (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-500">Đang tải dữ liệu...</td></tr>
-              ) : rooms.map((room) => (
-                <tr key={room.id} className={styles.tr}>
-                  <td className={`${styles.td} ${styles.tdText}`}>{room.name}</td>
-                  <td className={`${styles.td} ${styles.tdSubText}`}>{room.location}</td>
-                  {user?.Role === 'ADMIN' && (
-                    <td className={styles.tdActions}>
-                      <button onClick={() => openModal(room)} className={styles.editBtn}>Sửa</button>
-                      <button onClick={() => handleDelete(room.id)} className={styles.deleteBtn}>Xóa</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table 
+        columns={columns} 
+        dataSource={rooms} 
+        rowKey="id" 
+        loading={isLoading}
+        pagination={{ pageSize: 10 }}
+        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden"
+      />
 
-      {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingId ? 'Sửa phòng' : 'Thêm phòng mới'}</h3>
-              <button onClick={closeModal} className={styles.closeBtn}>&times;</button>
-            </div>
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div>
-                <label className={styles.label}>Tên phòng *</label>
-                <input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className={styles.input} />
-              </div>
-              <div>
-                <label className={styles.label}>Vị trí *</label>
-                <input type="text" required value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className={styles.input} />
-              </div>
-              <div className={styles.formActions}>
-                <button type="button" onClick={closeModal} className={styles.cancelBtn}>Hủy</button>
-                <button type="submit" className={styles.submitBtn}>Lưu lại</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Modal
+        title={editingId ? 'Sửa phòng' : 'Thêm phòng mới'}
+        open={isModalOpen}
+        onCancel={closeModal}
+        footer={null}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+          <Form.Item 
+            name="name" 
+            label="Tên phòng" 
+            rules={[{ required: true, message: 'Vui lòng nhập tên phòng!' }]}
+          >
+            <Input placeholder="Nhập tên phòng..." size="large" />
+          </Form.Item>
+          
+          <Form.Item 
+            name="location" 
+            label="Vị trí" 
+            rules={[{ required: true, message: 'Vui lòng nhập vị trí phòng!' }]}
+          >
+            <Input placeholder="Nhập vị trí (VD: Tầng 1, Tòa A)..." size="large" />
+          </Form.Item>
+
+          <Form.Item className="mb-0 text-right mt-6">
+            <Space>
+              <Button onClick={closeModal}>Hủy</Button>
+              <Button type="primary" htmlType="submit" className="bg-indigo-600">
+                Lưu lại
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

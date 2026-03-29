@@ -1,28 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, Form, Input, Select, Switch, InputNumber, Space, Tag, message, Row, Col } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { deviceService } from '../../services/deviceService';
 import { roomService } from '../../services/roomService';
 import type { Device, Room } from '../../types';
 import styles from './Devices.module.css';
 import { useAuth } from '../../contexts/AuthContext';
 
-const defaultFormState = {
-  name: '',
-  roomId: '',
-  isActive: true,
-  temperatureWarningThreshold: 30,
-  temperatureCriticalThreshold: 40,
-  humidityWarningThreshold: 60,
-  humidityCriticalThreshold: 80
-};
+const { Option } = Select;
 
 const Devices: React.FC = () => {
   const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState(defaultFormState);
+  
+  const [form] = Form.useForm();
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -34,232 +30,215 @@ const Devices: React.FC = () => {
       setDevices(devicesData);
       setRooms(roomsData);
     } catch (error) {
-      alert('Lỗi khi tải dữ liệu thiết bị!');
+      message.error('Lỗi khi tải dữ liệu thiết bị!');
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const openModal = (device?: Device) => {
     if (device) {
       setEditingId(device.id);
-      setFormData({
-        name: device.name,
-        roomId: device.roomId || '',
-        isActive: device.isActive,
-        temperatureWarningThreshold: device.temperatureWarningThreshold,
-        temperatureCriticalThreshold: device.temperatureCriticalThreshold,
-        humidityWarningThreshold: device.humidityWarningThreshold,
-        humidityCriticalThreshold: device.humidityCriticalThreshold
+      form.setFieldsValue({
+        ...device,
+        roomId: device.roomId || undefined,
       });
     } else {
       setEditingId(null);
-      setFormData(defaultFormState);
+      form.resetFields();
+      form.setFieldsValue({
+        isActive: true,
+        temperatureWarningThreshold: 30,
+        temperatureCriticalThreshold: 40,
+        humidityWarningThreshold: 60,
+        humidityCriticalThreshold: 80
+      });
     }
     setIsModalOpen(true);
   };
 
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: any) => {
     try {
       const payload = { 
-        ...formData, 
-        roomId: formData.roomId === '' ? null : formData.roomId 
+        ...values, 
+        roomId: values.roomId || null 
       };
 
-      if (editingId) 
-        await deviceService.updateDevice(editingId, payload);
-      else 
-        await deviceService.createDevice(payload);
+      if (editingId) await deviceService.updateDevice(editingId, payload);
+      else await deviceService.createDevice(payload);
       
-      alert('Lưu dữ liệu thành công!');
+      message.success('Lưu thiết bị thành công!');
       closeModal();
       fetchData();
-    } catch (error) {
-      alert('Lỗi khi lưu thiết bị!');
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi lưu thiết bị!');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa thiết bị này?')) {
-      try {
-        await deviceService.deleteDevice(id);
-        alert('Xóa thành công!');
-        fetchData();
-      } catch (error) {
-        alert('Lỗi khi xóa!');
+  const handleDelete = (id: string) => {
+    Modal.confirm({
+      title: 'Xóa thiết bị',
+      content: 'Bạn có chắc chắn muốn xóa thiết bị này khỏi hệ thống?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await deviceService.deleteDevice(id);
+          message.success('Xóa thiết bị thành công!');
+          fetchData();
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Lỗi khi xóa thiết bị!');
+        }
       }
-    }
+    });
   };
+
+  const columns = [
+    {
+      title: 'Thiết bị',
+      dataIndex: 'name',
+      key: 'name',
+      className: 'font-medium text-slate-900',
+    },
+    {
+      title: 'Phòng Server',
+      dataIndex: 'roomName',
+      key: 'roomName',
+      render: (text: string) => text ? <span className="text-slate-600">{text}</span> : <span className="text-slate-400 italic">Chưa gán</span>,
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      align: 'center' as const,
+      render: (isActive: boolean) => (
+        <Tag color={isActive ? 'success' : 'error'}>
+          {isActive ? 'Active' : 'Inactive'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Cảnh báo (Nhiệt/Ẩm)',
+      key: 'thresholds',
+      align: 'center' as const,
+      render: (_: any, record: Device) => (
+        <span className="text-sm">
+          <span className="text-orange-500 font-medium">{record.temperatureWarningThreshold}°C</span>
+          {' / '}
+          <span className="text-blue-500 font-medium">{record.humidityWarningThreshold}%</span>
+        </span>
+      ),
+    },
+    ...(user?.Role === 'ADMIN' ? [{
+      title: 'Thao tác',
+      key: 'action',
+      align: 'right' as const,
+      render: (_: any, record: Device) => (
+        <Space size="small">
+          <Button type="text" className="text-indigo-600 hover:text-indigo-800" icon={<EditOutlined />} onClick={() => openModal(record)}>Sửa</Button>
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>Xóa</Button>
+        </Space>
+      ),
+    }] : []),
+  ];
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Quản lý Thiết bị IoT</h2>
         {user?.Role === 'ADMIN' && (
-          <button onClick={() => openModal()} className={styles.addBtn}>+ Thêm thiết bị</button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} size="large" className="bg-indigo-600">
+            Thêm thiết bị
+          </Button>
         )}
       </div>
 
-      <div className={styles.tableWrapper}>
-        <div className={styles.tableResponsive}>
-          <table className={styles.table}>
-            <thead className={styles.thead}>
-              <tr>
-                <th className={styles.th}>Thiết bị</th>
-                <th className={styles.th}>Phòng Server</th>
-                <th className={styles.thCenter}>Trạng thái</th>
-                <th className={styles.thCenter}>Cảnh báo (Nhiệt/Ẩm)</th>
-                {user?.Role === 'ADMIN' && (
-                  <th className={styles.thRight}>Thao tác</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className={styles.tbody}>
-              {isLoading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Đang tải dữ liệu...</td></tr>
-              ) : devices.map((dev) => (
-                <tr key={dev.id} className={styles.tr}>
-                  <td className={styles.td}>
-                    <div className={styles.textMain}>{dev.name}</div>
-                  </td>
-                  <td className={styles.td}>
-                    {dev.roomName ? 
-                      <span className={styles.textRoom}>{dev.roomName}</span> : 
-                      <span className={styles.textUnassigned}>Chưa gán</span>}
-                  </td>
-                  <td className={styles.tdCenter}>
-                    <span className={dev.isActive ? styles.badgeActive : styles.badgeInactive}>
-                      {dev.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className={styles.tdCenter}>
-                    <span className="text-sm text-slate-600">
-                      <span className="text-orange-600 font-medium">{dev.temperatureWarningThreshold}°C</span> / <span className="text-blue-600 font-medium">{dev.humidityWarningThreshold}%</span>
-                    </span>
-                  </td>
-                  {user?.Role === 'ADMIN' && (
-                    <td className={styles.tdRight}>
-                      <button onClick={() => openModal(dev)} className={styles.editBtn}>Sửa</button>
-                      <button onClick={() => handleDelete(dev.id)} className={styles.deleteBtn}>Xóa</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Table 
+        columns={columns} 
+        dataSource={devices} 
+        rowKey="id" 
+        loading={isLoading}
+        pagination={{ pageSize: 10 }}
+        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden"
+      />
 
-      {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingId ? 'Sửa Thiết bị' : 'Thêm Thiết bị mới'}</h3>
-              <button onClick={closeModal} className={styles.closeBtn}>&times;</button>
-            </div>
+      <Modal
+        title={editingId ? 'Sửa Thiết bị' : 'Thêm Thiết bị mới'}
+        open={isModalOpen}
+        onCancel={closeModal}
+        footer={null}
+        width={700}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="name" label="Tên thiết bị" rules={[{ required: true, message: 'Vui lòng nhập tên thiết bị!' }]}>
+                <Input placeholder="Nhập tên thiết bị..." size="large" />
+              </Form.Item>
+              
+              <Form.Item name="roomId" label="Phòng Server">
+                <Select placeholder="-- Chưa gán phòng --" size="large" allowClear>
+                  {rooms.map(r => <Option key={r.id} value={r.id}>{r.name}</Option>)}
+                </Select>
+              </Form.Item>
 
-            <form onSubmit={handleSubmit} className={styles.form}>
-              <div className={styles.formGrid}>
-                <div className={styles.colSpace}>
-                  <div>
-                    <label className={styles.label}>Tên thiết bị *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={formData.name} 
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className={styles.input}
-                    />
-                  </div>
+              <Form.Item name="isActive" label="Trạng thái hoạt động" valuePropName="checked">
+                <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+              </Form.Item>
+            </Col>
 
-                  <div>
-                    <label className={styles.label}>Phòng Server</label>
-                    <select 
-                      value={formData.roomId} 
-                      onChange={(e) => setFormData({...formData, roomId: e.target.value})}
-                      className={styles.input}
-                    >
-                      <option value="">-- Chưa gán phòng --</option>
-                      {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
-                  </div>
+            <Col span={12}>
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h4 className="font-semibold text-slate-700 text-sm mb-4 border-b pb-2">Ngưỡng cảnh báo</h4>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item name="temperatureWarningThreshold" label={<span className="text-orange-600 text-xs font-medium">Nhiệt độ cảnh báo (°C)</span>} rules={[{ required: true }]}>
+                      <InputNumber className="w-full" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="temperatureCriticalThreshold" label={<span className="text-red-600 text-xs font-medium">Nhiệt độ nguy hiểm (°C)</span>} rules={[{ required: true }]}>
+                      <InputNumber className="w-full" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-                  <div className={styles.checkboxWrapper}>
-                    <input 
-                      type="checkbox" 
-                      id="isActive" 
-                      checked={formData.isActive} 
-                      onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                      className={styles.checkbox}
-                    />
-                    <label htmlFor="isActive" className={styles.checkboxLabel}>Thiết bị đang hoạt động (Active)</label>
-                  </div>
-                </div>
-
-                <div className={styles.thresholdCard}>
-                  <h4 className={styles.thresholdTitle}>Ngưỡng cảnh báo</h4>
-                  <div className={styles.thresholdGrid}>
-                    <div>
-                      <label className={styles.labelOrange}>Nhiệt độ cảnh báo (°C)</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={formData.temperatureWarningThreshold} 
-                        onChange={(e) => setFormData({...formData, temperatureWarningThreshold: Number(e.target.value)})}
-                        className={styles.input}
-                      />
-                    </div>
-                    <div>
-                      <label className={styles.labelRed}>Nhiệt độ nguy hiểm (°C)</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={formData.temperatureCriticalThreshold} 
-                        onChange={(e) => setFormData({...formData, temperatureCriticalThreshold: Number(e.target.value)})}
-                        className={styles.input}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.thresholdGrid}>
-                    <div>
-                      <label className={styles.labelBlueLight}>Độ ẩm cảnh báo (%)</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={formData.humidityWarningThreshold} 
-                        onChange={(e) => setFormData({...formData, humidityWarningThreshold: Number(e.target.value)})}
-                        className={styles.input}
-                      />
-                    </div>
-                    <div>
-                      <label className={styles.labelBlueDark}>Độ ẩm nguy hiểm (%)</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={formData.humidityCriticalThreshold} 
-                        onChange={(e) => setFormData({...formData, humidityCriticalThreshold: Number(e.target.value)})}
-                        className={styles.input}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item name="humidityWarningThreshold" label={<span className="text-blue-500 text-xs font-medium">Độ ẩm cảnh báo (%)</span>} rules={[{ required: true }]}>
+                      <InputNumber className="w-full" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="humidityCriticalThreshold" label={<span className="text-blue-800 text-xs font-medium">Độ ẩm nguy hiểm (%)</span>} rules={[{ required: true }]}>
+                      <InputNumber className="w-full" />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </div>
+            </Col>
+          </Row>
 
-              <div className={styles.formActions}>
-                <button type="button" onClick={closeModal} className={styles.cancelBtn}>Hủy</button>
-                <button type="submit" className={styles.submitBtn}>Lưu thiết bị</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+          <Form.Item className="mb-0 text-right mt-4 pt-4 border-t border-slate-200">
+            <Space>
+              <Button onClick={closeModal}>Hủy</Button>
+              <Button type="primary" htmlType="submit" className="bg-indigo-600">
+                Lưu thiết bị
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

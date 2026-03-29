@@ -4,7 +4,11 @@ export interface DashboardDeviceDto {
   currentTemperature: number;
   currentHumidity: number;
   lastSeen: string;
-  status: 'Normal' | 'Warning' | 'Danger' | 'Offline';
+  isOffline: boolean;
+  warningTemp?: number;
+  criticalTemp?: number;
+  warningHumidity?: number;
+  criticalHumidity?: number;
 }
 
 export interface DashboardRoomDto {
@@ -25,5 +29,4 @@ export interface DeviceUpdateDto {
   temperature: number;
   humidity: number;
   timestamp: string;
-  status: 'Normal' | 'Warning' | 'Danger' | 'Offline';
 }

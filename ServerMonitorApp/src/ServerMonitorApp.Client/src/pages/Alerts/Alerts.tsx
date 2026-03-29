@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Table, Select, Modal, Form, Input, Button, Tag, Space, message, Typography } from 'antd';
+import { CheckCircleOutlined } from '@ant-design/icons';
 import { alertService } from '../../services/alertService';
 import type { AlertDto } from '../../types';
 import styles from './Alerts.module.css';
+
+const { Option } = Select;
+const { Text } = Typography;
 
 const Alerts: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertDto[]>([]);
@@ -15,8 +20,7 @@ const Alerts: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvingAlertId, setResolvingAlertId] = useState<number | null>(null);
-  const [resolutionNote, setResolutionNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form] = Form.useForm();
 
   const fetchAlerts = useCallback(async () => {
     setIsLoading(true);
@@ -37,7 +41,8 @@ const Alerts: React.FC = () => {
       setAlerts(items);
       setTotalRecords(total);
     } catch (error) {
-      console.error('Lỗi khi tải danh sách cảnh báo:', error);
+      message.error('Lỗi khi tải danh sách cảnh báo!');
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -47,38 +52,104 @@ const Alerts: React.FC = () => {
     fetchAlerts();
   }, [fetchAlerts]);
 
-  const totalPages = Math.ceil(totalRecords / pageSize);
-
-  const getSeverityBadge = (severity: string) => {
-    switch (severity?.toUpperCase()) {
-      case 'CRITICAL': return <span className={styles.badgeCritical}>CRITICAL</span>;
-      case 'WARNING': return <span className={styles.badgeWarning}>WARNING</span>;
-      case 'OFFLINE': return <span className={styles.badgeOffline}>OFFLINE</span>;
-      default: return <span className={styles.badgeOffline}>{severity}</span>;
-    }
+  const handleTableChange = (pagination: any) => {
+    setPageNumber(pagination.current);
   };
 
   const openResolveModal = (id: number) => {
     setResolvingAlertId(id);
-    setResolutionNote('');
+    form.resetFields();
     setIsModalOpen(true);
   };
 
-  const handleResolveSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setResolvingAlertId(null);
+    form.resetFields();
+  };
+
+  const handleResolveSubmit = async (values: { resolutionNote: string }) => {
     if (!resolvingAlertId) return;
 
-    setIsSubmitting(true);
     try {
-      await alertService.resolveAlert(resolvingAlertId, resolutionNote);
-      setIsModalOpen(false);
+      await alertService.resolveAlert(resolvingAlertId, values.resolutionNote);
+      message.success('Đã xử lý cảnh báo thành công!');
+      closeModal();
       fetchAlerts(); // Tải lại danh sách
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý cảnh báo!');
-    } finally {
-      setIsSubmitting(false);
+      message.error(error.response?.data?.message || 'Có lỗi xảy ra khi xử lý cảnh báo!');
     }
   };
+
+  const columns = [
+    {
+      title: 'Thời gian',
+      key: 'time',
+      render: (_: any, record: AlertDto) => (
+        <div className="flex flex-col">
+          <Text className="font-medium text-slate-900">{new Date(record.createdAt).toLocaleDateString('vi-VN')}</Text>
+          <Text type="secondary" className="text-xs">{new Date(record.createdAt).toLocaleTimeString('vi-VN')}</Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Phòng / Thiết bị',
+      key: 'location',
+      render: (_: any, record: AlertDto) => (
+        <div className="flex flex-col">
+          <Text className="font-medium text-slate-900">{record.roomName || 'Hệ thống'}</Text>
+          <Text type="secondary" className="text-xs">{record.deviceName || 'Không xác định'}</Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Mức độ',
+      dataIndex: 'severity',
+      key: 'severity',
+      align: 'center' as const,
+      render: (severity: string) => {
+        let color = 'default';
+        if (severity === 'CRITICAL') color = 'error';
+        if (severity === 'WARNING') color = 'warning';
+        return <Tag color={color} className="font-bold">{severity}</Tag>;
+      },
+    },
+    {
+      title: 'Nội dung',
+      dataIndex: 'message',
+      key: 'message',
+      render: (text: string) => <div className="max-w-md break-words text-sm text-slate-700">{text}</div>,
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isResolved',
+      key: 'isResolved',
+      align: 'center' as const,
+      render: (isResolved: boolean) => (
+        <Tag color={isResolved ? 'success' : 'error'}>
+          {isResolved ? 'Đã xử lý' : 'Chưa xử lý'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      align: 'right' as const,
+      render: (_: any, record: AlertDto) => (
+        !record.isResolved ? (
+          <Button 
+            type="primary" 
+            ghost 
+            size="small" 
+            icon={<CheckCircleOutlined />}
+            onClick={() => openResolveModal(record.id)}
+          >
+            Xử lý
+          </Button>
+        ) : null
+      ),
+    },
+  ];
 
   return (
     <div className={styles.container}>
@@ -86,138 +157,84 @@ const Alerts: React.FC = () => {
         <h2 className={styles.title}>Lịch sử Cảnh báo & Sự cố</h2>
       </div>
 
-      <div className={styles.filterCard}>
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Trạng thái</label>
-          <select 
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end mb-6">
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm font-medium text-slate-600">Trạng thái</label>
+          <Select 
             value={statusFilter} 
-            onChange={(e) => { setStatusFilter(e.target.value); setPageNumber(1); }}
-            className={styles.filterSelect}
+            onChange={(val) => { setStatusFilter(val); setPageNumber(1); }}
+            className="w-40"
+            size="large"
           >
-            <option value="">Tất cả</option>
-            <option value="unresolved">Chưa xử lý</option>
-            <option value="resolved">Đã xử lý</option>
-          </select>
+            <Option value="">Tất cả</Option>
+            <Option value="unresolved">Chưa xử lý</Option>
+            <Option value="resolved">Đã xử lý</Option>
+          </Select>
         </div>
 
-        <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>Mức độ</label>
-          <select 
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm font-medium text-slate-600">Mức độ</label>
+          <Select 
             value={severityFilter} 
-            onChange={(e) => { setSeverityFilter(e.target.value); setPageNumber(1); }}
-            className={styles.filterSelect}
+            onChange={(val) => { setSeverityFilter(val); setPageNumber(1); }}
+            className="w-48"
+            size="large"
           >
-            <option value="">Tất cả</option>
-            <option value="CRITICAL">Critical (Nguy hiểm)</option>
-            <option value="WARNING">Warning (Cảnh báo)</option>
-            <option value="OFFLINE">Offline (Mất kết nối)</option>
-          </select>
+            <Option value="">Tất cả</Option>
+            <Option value="CRITICAL">Critical (Nguy hiểm)</Option>
+            <Option value="WARNING">Warning (Cảnh báo)</Option>
+            <Option value="OFFLINE">Offline (Mất kết nối)</Option>
+          </Select>
         </div>
       </div>
 
-      <div className={styles.tableWrapper}>
-        <div className={styles.tableResponsive}>
-          <table className={styles.table}>
-            <thead className={styles.thead}>
-              <tr>
-                <th className={styles.th}>Thời gian</th>
-                <th className={styles.th}>Phòng / Thiết bị</th>
-                <th className={styles.thCenter}>Mức độ</th>
-                <th className={styles.th}>Nội dung</th>
-                <th className={styles.thCenter}>Trạng thái</th>
-                <th className={styles.thRight}>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className={styles.tbody}>
-              {isLoading ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Đang tải dữ liệu...</td></tr>
-              ) : alerts.length === 0 ? (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Không tìm thấy cảnh báo nào.</td></tr>
-              ) : alerts.map((alert) => (
-                <tr key={alert.id} className={`${styles.tr} ${alert.isResolved ? styles.trResolved : ''}`}>
-                  <td className={styles.td}>
-                    <div className={styles.textMain}>{new Date(alert.createdAt).toLocaleDateString('vi-VN')}</div>
-                    <div className={styles.textSub}>{new Date(alert.createdAt).toLocaleTimeString('vi-VN')}</div>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.textMain}>{alert.roomName || 'Chưa rõ phòng'}</div>
-                    <div className={styles.textSub}>{alert.deviceName || 'Hệ thống'}</div>
-                  </td>
-                  <td className={styles.tdCenter}>
-                    {getSeverityBadge(alert.severity)}
-                  </td>
-                  <td className={styles.tdMessage} title={alert.message}>
-                    {alert.message}
-                  </td>
-                  <td className={styles.tdCenter}>
-                    <span className={alert.isResolved ? styles.badgeResolved : styles.badgeUnresolved}>
-                      {alert.isResolved ? 'Đã xử lý' : 'Chưa xử lý'}
-                    </span>
-                  </td>
-                  <td className={styles.tdRight}>
-                    {!alert.isResolved && (
-                      <button onClick={() => openResolveModal(alert.id)} className={styles.resolveBtn}>
-                        Xử lý
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <Table 
+        columns={columns} 
+        dataSource={alerts} 
+        rowKey="id" 
+        loading={isLoading}
+        onChange={handleTableChange}
+        pagination={{ 
+          current: pageNumber,
+          pageSize: pageSize,
+          total: totalRecords,
+          showSizeChanger: false, // Tắt chức năng đổi số lượng / trang nếu API không hỗ trợ động
+          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trên tổng số ${total} cảnh báo`
+        }}
+        rowClassName={(record) => record.isResolved ? 'bg-slate-50 opacity-80' : ''}
+        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden bg-white"
+        scroll={{ x: 'max-content' }}
+      />
 
-        <div className={styles.paginationWrapper}>
-          <span className={styles.pageInfo}>
-            Hiển thị trang <span className="font-semibold">{pageNumber}</span> trên <span className="font-semibold">{totalPages || 1}</span> ({totalRecords} kết quả)
-          </span>
-          <div className={styles.pageControls}>
-            <button 
-              className={styles.pageBtn} 
-              disabled={pageNumber <= 1 || isLoading}
-              onClick={() => setPageNumber(prev => prev - 1)}
-            >
-              Trước
-            </button>
-            <button 
-              className={styles.pageBtn} 
-              disabled={pageNumber >= totalPages || isLoading}
-              onClick={() => setPageNumber(prev => prev + 1)}
-            >
-              Sau
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Xử lý Sự cố</h3>
-              <button onClick={() => setIsModalOpen(false)} className={styles.closeBtn}>&times;</button>
-            </div>
-            <form onSubmit={handleResolveSubmit} className={styles.form}>
-              <div>
-                <label className={styles.label}>Ghi chú khắc phục *</label>
-                <textarea 
-                  required 
-                  value={resolutionNote} 
-                  onChange={(e) => setResolutionNote(e.target.value)} 
-                  className={styles.textarea}
-                  placeholder="Mô tả các bước đã thực hiện để khắc phục sự cố..."
-                />
-              </div>
-              <div className={styles.formActions}>
-                <button type="button" onClick={() => setIsModalOpen(false)} className={styles.cancelBtn} disabled={isSubmitting}>Hủy</button>
-                <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
-                  {isSubmitting ? 'Đang lưu...' : 'Xác nhận xử lý'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Modal
+        title="Xử lý Sự cố"
+        open={isModalOpen}
+        onCancel={closeModal}
+        footer={null}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" onFinish={handleResolveSubmit} className="mt-4">
+          <Form.Item 
+            name="resolutionNote" 
+            label="Ghi chú khắc phục"
+            rules={[{ required: true, message: 'Vui lòng nhập ghi chú khắc phục!' }]}
+          >
+            <Input.TextArea 
+              rows={4} 
+              placeholder="Mô tả các bước đã thực hiện để khắc phục sự cố..." 
+            />
+          </Form.Item>
+          
+          <Form.Item className="mb-0 text-right mt-6">
+            <Space>
+              <Button onClick={closeModal}>Hủy</Button>
+              <Button type="primary" htmlType="submit" className="bg-indigo-600">
+                Xác nhận xử lý
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
