@@ -8,6 +8,7 @@ using ServerMonitorApp.Application.Features.Devices.DTOs;
 using ServerMonitorApp.Application.Features.Devices.Queries.GetDeviceById;
 using ServerMonitorApp.Application.Features.Devices.Queries.GetDevices;
 using ServerMonitorApp.Application.Wrappers;
+using System.Security.Claims;
 
 namespace ServerMonitorApp.API.Controllers
 {
@@ -26,7 +27,18 @@ namespace ServerMonitorApp.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDevices()
         {
-            Response<IEnumerable<DeviceDto>>? response = await _mediator.Send(new GetDevicesQuery());
+            string? userIdString = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            string? role = User.FindFirstValue(System.Security.Claims.ClaimTypes.Role);
+
+            GetDevicesQuery query = new GetDevicesQuery();
+
+            if (Guid.TryParse(userIdString, out Guid userId))
+            {
+                query.UserId = userId;
+                query.Role = role ?? "USER";
+            }
+
+            Response<IEnumerable<DeviceDto>>? response = await _mediator.Send(query);
             return Ok(response);
         }
 

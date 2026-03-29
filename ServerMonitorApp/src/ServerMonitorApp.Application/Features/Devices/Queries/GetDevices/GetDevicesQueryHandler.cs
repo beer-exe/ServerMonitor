@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ServerMonitorApp.Application.Common.Interfaces;
 using ServerMonitorApp.Application.Features.Devices.DTOs;
 using ServerMonitorApp.Application.Wrappers;
+using ServerMonitorApp.Domain.Models;
 
 namespace ServerMonitorApp.Application.Features.Devices.Queries.GetDevices
 {
@@ -17,9 +18,16 @@ namespace ServerMonitorApp.Application.Features.Devices.Queries.GetDevices
 
         public async Task<Response<IEnumerable<DeviceDto>>> Handle(GetDevicesQuery request, CancellationToken cancellationToken)
         {
-            List<DeviceDto>? devices = await _context.Devices
-                .Include(d => d.Room)
-                .AsNoTracking()
+            IQueryable<Device> query = _context.Devices
+                            .Include(d => d.Room)
+                            .AsNoTracking();
+
+            if (request.Role != "ADMIN")
+            {
+                query = query.Where(d => d.RoomId != null && d.Room!.UserRoomAccesses.Any(ura => ura.UserId == request.UserId));
+            }
+
+            List<DeviceDto>? devices = await query
                 .OrderByDescending(d => d.CreatedAt)
                 .Select(d => new DeviceDto
                 {

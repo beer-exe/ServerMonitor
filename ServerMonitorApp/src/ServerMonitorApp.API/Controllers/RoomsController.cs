@@ -9,6 +9,7 @@ using ServerMonitorApp.Application.Features.Rooms.DTOs;
 using ServerMonitorApp.Application.Features.Rooms.Queries.GetRoomById;
 using ServerMonitorApp.Application.Features.Rooms.Queries.GetRooms;
 using ServerMonitorApp.Application.Wrappers;
+using System.Security.Claims;
 
 namespace ServerMonitorApp.API.Controllers
 {
@@ -27,6 +28,15 @@ namespace ServerMonitorApp.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRooms([FromQuery] GetRoomsQuery query)
         {
+            string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string? role = User.FindFirstValue(ClaimTypes.Role);
+
+            if (Guid.TryParse(userIdString, out Guid userId))
+            {
+                query.UserId = userId;
+                query.Role = role ?? "USER";
+            }
+
             Response<IEnumerable<RoomDto>>? response = await _mediator.Send(query);
             return Ok(response);
         }

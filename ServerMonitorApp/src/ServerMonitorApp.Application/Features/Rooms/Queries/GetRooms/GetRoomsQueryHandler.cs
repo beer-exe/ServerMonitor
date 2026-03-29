@@ -20,6 +20,11 @@ namespace ServerMonitorApp.Application.Features.Rooms.Queries.GetRooms
         {
             IQueryable<Room?> query = _context.Rooms.AsNoTracking().AsQueryable();
 
+            if (request.Role != "ADMIN")
+            {
+                query = query.Where(r => r.UserRoomAccesses.Any(ura => ura.UserId == request.UserId));
+            }
+
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 string? searchTerm = request.SearchTerm.ToLower();
