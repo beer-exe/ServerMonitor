@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Space, Tag, message } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Space, Tag, message, Pagination } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { userService } from '../../services/userService';
 import type { UserItem } from '../../types';
@@ -13,6 +13,10 @@ const Users: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form] = Form.useForm();
+
+  // Thêm state quản lý phân trang đồng bộ cho cả PC và Mobile
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -80,6 +84,8 @@ const Users: React.FC = () => {
           await userService.deleteUser(id);
           message.success('Xóa tài khoản thành công!');
           fetchUsers();
+          // Reset về trang 1 nếu xóa hết user ở trang hiện tại
+          setCurrentPage(1); 
         } catch (error: any) {
           message.error(error.response?.data?.message || 'Lỗi khi xóa tài khoản!');
         }
@@ -144,6 +150,9 @@ const Users: React.FC = () => {
     },
   ];
 
+  // Tính toán dữ liệu hiển thị cho Mobile dựa theo Pagination
+  const paginatedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -153,20 +162,90 @@ const Users: React.FC = () => {
           icon={<PlusOutlined />} 
           onClick={() => openModal()} 
           size="large" 
-          className="bg-indigo-600"
+          className="bg-indigo-600 w-full md:w-auto"
         >
           Thêm tài khoản
         </Button>
       </div>
 
-      <Table 
-        columns={columns} 
-        dataSource={users} 
-        rowKey="id" 
-        loading={isLoading} 
-        pagination={{ pageSize: 10 }} 
-        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden" 
-      />
+      {/* Giao diện PC (Giữ nguyên Table 100%) */}
+      <div className="hidden md:block">
+        <Table 
+          columns={columns} 
+          dataSource={users} 
+          rowKey="id" 
+          loading={isLoading} 
+          pagination={{ 
+            current: currentPage,
+            pageSize: pageSize,
+            onChange: (page) => setCurrentPage(page)
+          }} 
+          className="shadow-sm border border-slate-200 rounded-lg overflow-hidden" 
+        />
+      </div>
+
+      {/* Giao diện Mobile (Có phân trang đơn giản) */}
+      <div className="md:hidden flex flex-col gap-4">
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500">Đang tải dữ liệu...</div>
+        ) : users.length > 0 ? (
+          <>
+            {paginatedUsers.map((user) => (
+              <div key={user.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col gap-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 overflow-hidden">
+                    <div className="font-bold text-slate-900 text-lg truncate">{user.username}</div>
+                    <div className="text-sm text-slate-500 truncate">{user.email}</div>
+                  </div>
+                  <div>
+                    <Tag color={user.role === 'ADMIN' ? 'purple' : 'blue'} className="m-0 font-semibold">
+                      {user.role}
+                    </Tag>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-1">
+                  <div className="text-sm text-slate-500">
+                    Ngày tạo: <span className="text-slate-800 font-medium">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '--'}</span>
+                  </div>
+                  <Space size="small">
+                    <Button 
+                      type="text" 
+                      className="text-indigo-600 px-2" 
+                      icon={<EditOutlined />} 
+                      onClick={() => openModal(user)}
+                    />
+                    <Button 
+                      type="text" 
+                      danger 
+                      className="px-2"
+                      icon={<DeleteOutlined />} 
+                      onClick={() => handleDelete(user.id)}
+                    />
+                  </Space>
+                </div>
+              </div>
+            ))}
+            
+            {/* Component Phân trang dành riêng cho Mobile (Dùng giao diện simple) */}
+            {users.length > pageSize && (
+              <div className="flex justify-center mt-2 pb-4">
+                <Pagination
+                  simple
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={users.length}
+                  onChange={(page) => setCurrentPage(page)}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8 text-slate-500 bg-white border border-slate-200 rounded-lg">
+            Không có dữ liệu người dùng.
+          </div>
+        )}
+      </div>
 
       <Modal
         title={editingId ? 'Sửa thông tin tài khoản' : 'Thêm tài khoản mới'}
@@ -174,9 +253,9 @@ const Users: React.FC = () => {
         onCancel={closeModal}
         footer={null}
         destroyOnClose
+        style={{ top: 20 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
-          {/* Username chỉ được nhập khi thêm mới */}
           {!editingId && (
             <Form.Item 
               name="username" 
@@ -220,7 +299,7 @@ const Users: React.FC = () => {
           </Form.Item>
 
           <Form.Item className="mb-0 text-right mt-6">
-            <Space>
+            <Space className="w-full justify-end md:w-auto">
               <Button onClick={closeModal}>Hủy</Button>
               <Button type="primary" htmlType="submit" className="bg-indigo-600">
                 Lưu lại

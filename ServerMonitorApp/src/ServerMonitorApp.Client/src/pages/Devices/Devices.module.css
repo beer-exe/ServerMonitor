@@ -1,8 +1,8 @@
 @reference "tailwindcss";
 
 .container { @apply space-y-6; }
-.header { @apply flex justify-between items-center; }
-.title { @apply text-2xl font-bold text-slate-800; }
+.header { @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4; }
+.title { @apply text-xl md:text-2xl font-bold text-slate-800; }
 .addBtn { @apply bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm font-medium transition-colors; }
 
 .tableWrapper { @apply bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden; }

@@ -1,19 +1,27 @@
 @reference "tailwindcss";
 
 .header {
-  @apply flex items-center justify-between px-6 bg-white border-b border-slate-200 h-16 shadow-sm z-10 flex-shrink-0;
+  @apply flex items-center justify-between px-4 md:px-6 bg-white border-b border-slate-200 h-16 shadow-sm z-10 flex-shrink-0;
+}
+
+.headerLeft {
+  @apply flex items-center gap-3;
+}
+
+.menuBtn {
+  @apply md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500;
 }
 
 .title {
-  @apply text-slate-800 text-lg font-bold tracking-tight;
+  @apply text-slate-800 text-lg font-bold tracking-tight hidden sm:block;
 }
 
 .userInfo {
-  @apply flex items-center space-x-4;
+  @apply flex items-center space-x-2 md:space-x-4 ml-auto;
 }
 
 .greeting {
-  @apply text-sm text-slate-600;
+  @apply text-xs md:text-sm text-slate-600;
 }
 
 .userName {
@@ -21,5 +29,5 @@
 }
 
 .logoutBtn {
-  @apply text-sm font-medium bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none flex items-center gap-2;
+  @apply text-sm font-medium bg-red-50 text-red-600 px-3 py-2 md:px-4 md:py-2 rounded-lg hover:bg-red-100 transition-colors focus:ring-2 focus:ring-red-500 focus:outline-none flex items-center gap-2;
 }

@@ -1,7 +1,11 @@
 @reference "tailwindcss";
 
 .container {
-  @apply min-h-screen bg-gray-50 dark:bg-gray-900 p-6;
+  @apply p-4 md:p-6 min-h-full;
+}
+
+:global(.ant-modal-body) {
+  @apply max-h-[80vh] overflow-y-auto;
 }
 
 .pageTitle {
@@ -98,4 +102,31 @@
 
 .modalTitle {
   @apply text-xl font-bold mb-4 dark:text-white;
+}
+
+@media (max-width: 767px) {
+  .chartModal {
+    margin: 8px !important;
+    width: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
+  }
+  
+  :global(.ant-modal-body) {
+    padding: 12px !important;
+  }
+}
+
+:global(.custom-scrollbar::-webkit-scrollbar) {
+  height: 6px;
+}
+:global(.custom-scrollbar::-webkit-scrollbar-track) {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+:global(.custom-scrollbar::-webkit-scrollbar-thumb) {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+:global(.custom-scrollbar::-webkit-scrollbar-thumb:hover) {
+  background: #94a3b8;
 }

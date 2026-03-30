@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Space, message } from 'antd';
+import { Table, Button, Modal, Form, Input, Space, message, Pagination } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { roomService } from '../../services/roomService';
 import type { Room } from '../../types';
@@ -15,6 +15,9 @@ const Rooms: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   
   const [form] = Form.useForm();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const fetchRooms = async () => {
     setIsLoading(true);
@@ -71,6 +74,7 @@ const Rooms: React.FC = () => {
           await roomService.deleteRoom(id);
           message.success('Xóa phòng thành công!');
           fetchRooms();
+          setCurrentPage(1); // Reset về trang đầu khi xóa
         } catch (error: any) {
           message.error(error.response?.data?.message || 'Lỗi khi xóa phòng!');
         }
@@ -104,25 +108,78 @@ const Rooms: React.FC = () => {
     }] : []),
   ];
 
+  const paginatedRooms = rooms.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Quản lý Phòng Server</h2>
         {user?.Role === 'ADMIN' && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} size="large" className="bg-indigo-600">
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()} size="large" className="bg-indigo-600 w-full md:w-auto">
             Thêm phòng mới
           </Button>
         )}
       </div>
 
-      <Table 
-        columns={columns} 
-        dataSource={rooms} 
-        rowKey="id" 
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden"
-      />
+      <div className="hidden md:block">
+        <Table 
+          columns={columns} 
+          dataSource={rooms} 
+          rowKey="id" 
+          loading={isLoading}
+          pagination={{ 
+            current: currentPage,
+            pageSize: pageSize,
+            onChange: (page) => setCurrentPage(page)
+          }}
+          className="shadow-sm border border-slate-200 rounded-lg overflow-hidden"
+        />
+      </div>
+
+      <div className="md:hidden flex flex-col gap-4">
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500">Đang tải dữ liệu...</div>
+        ) : rooms.length > 0 ? (
+          <>
+            {paginatedRooms.map((room) => (
+              <div key={room.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col gap-3">
+                <div className="flex-1">
+                  <div className="font-bold text-slate-900 text-lg">{room.name}</div>
+                  <div className="text-sm text-slate-600 mt-1">
+                    <span className="font-medium text-slate-500 mr-1">Vị trí:</span>
+                    {room.location}
+                  </div>
+                </div>
+                
+                {user?.Role === 'ADMIN' && (
+                  <div className="flex justify-end items-center pt-3 border-t border-slate-100 mt-1">
+                    <Space size="small">
+                      <Button type="text" className="text-indigo-600 px-2" icon={<EditOutlined />} onClick={() => openModal(room)}>Sửa</Button>
+                      <Button type="text" danger className="px-2" icon={<DeleteOutlined />} onClick={() => handleDelete(room.id)}>Xóa</Button>
+                    </Space>
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {rooms.length > pageSize && (
+              <div className="flex justify-center mt-2 pb-4">
+                <Pagination
+                  simple
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={rooms.length}
+                  onChange={(page) => setCurrentPage(page)}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8 text-slate-500 bg-white border border-slate-200 rounded-lg">
+            Không có dữ liệu phòng.
+          </div>
+        )}
+      </div>
 
       <Modal
         title={editingId ? 'Sửa phòng' : 'Thêm phòng mới'}
@@ -130,6 +187,7 @@ const Rooms: React.FC = () => {
         onCancel={closeModal}
         footer={null}
         destroyOnClose
+        style={{ top: 20 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
           <Form.Item 
@@ -149,7 +207,7 @@ const Rooms: React.FC = () => {
           </Form.Item>
 
           <Form.Item className="mb-0 text-right mt-6">
-            <Space>
+            <Space className="w-full justify-end md:w-auto">
               <Button onClick={closeModal}>Hủy</Button>
               <Button type="primary" htmlType="submit" className="bg-indigo-600">
                 Lưu lại

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Select, Modal, Form, Input, Button, Tag, Space, message, Typography } from 'antd';
+import { Table, Select, Modal, Form, Input, Button, Tag, Space, message, Typography, Pagination } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { alertService } from '../../services/alertService';
 import type { AlertDto } from '../../types';
@@ -157,13 +157,13 @@ const Alerts: React.FC = () => {
         <h2 className={styles.title}>Lịch sử Cảnh báo & Sự cố</h2>
       </div>
 
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end mb-6">
-        <div className="flex flex-col space-y-1">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col space-y-1 w-full sm:w-auto">
           <label className="text-sm font-medium text-slate-600">Trạng thái</label>
           <Select 
             value={statusFilter} 
             onChange={(val) => { setStatusFilter(val); setPageNumber(1); }}
-            className="w-40"
+            className="w-full sm:w-40"
             size="large"
           >
             <Option value="">Tất cả</Option>
@@ -172,12 +172,12 @@ const Alerts: React.FC = () => {
           </Select>
         </div>
 
-        <div className="flex flex-col space-y-1">
+        <div className="flex flex-col space-y-1 w-full sm:w-auto">
           <label className="text-sm font-medium text-slate-600">Mức độ</label>
           <Select 
             value={severityFilter} 
             onChange={(val) => { setSeverityFilter(val); setPageNumber(1); }}
-            className="w-48"
+            className="w-full sm:w-48"
             size="large"
           >
             <Option value="">Tất cả</Option>
@@ -188,23 +188,98 @@ const Alerts: React.FC = () => {
         </div>
       </div>
 
-      <Table 
-        columns={columns} 
-        dataSource={alerts} 
-        rowKey="id" 
-        loading={isLoading}
-        onChange={handleTableChange}
-        pagination={{ 
-          current: pageNumber,
-          pageSize: pageSize,
-          total: totalRecords,
-          showSizeChanger: false, // Tắt chức năng đổi số lượng / trang nếu API không hỗ trợ động
-          showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trên tổng số ${total} cảnh báo`
-        }}
-        rowClassName={(record) => record.isResolved ? 'bg-slate-50 opacity-80' : ''}
-        className="shadow-sm border border-slate-200 rounded-lg overflow-hidden bg-white"
-        scroll={{ x: 'max-content' }}
-      />
+      <div className="hidden md:block">
+        <Table 
+          columns={columns} 
+          dataSource={alerts} 
+          rowKey="id" 
+          loading={isLoading}
+          onChange={handleTableChange}
+          pagination={{ 
+            current: pageNumber,
+            pageSize: pageSize,
+            total: totalRecords,
+            showSizeChanger: false,
+            showTotal: (total, range) => `Hiển thị ${range[0]}-${range[1]} trên tổng số ${total} cảnh báo`
+          }}
+          rowClassName={(record) => record.isResolved ? 'bg-slate-50 opacity-80' : ''}
+          className="shadow-sm border border-slate-200 rounded-lg overflow-hidden bg-white"
+          scroll={{ x: 'max-content' }}
+        />
+      </div>
+
+      <div className="md:hidden flex flex-col gap-4">
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500">Đang tải dữ liệu...</div>
+        ) : alerts.length > 0 ? (
+          <>
+            {alerts.map((alert) => (
+              <div 
+                key={alert.id} 
+                className={`bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3 ${alert.isResolved ? 'opacity-80 bg-slate-50' : ''}`}
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 overflow-hidden">
+                    <div className="font-bold text-slate-900 text-base">{alert.roomName || 'Hệ thống'}</div>
+                    <div className="text-sm text-slate-500">{alert.deviceName || 'Không xác định thiết bị'}</div>
+                  </div>
+                  <div>
+                    <Tag 
+                      color={alert.severity === 'CRITICAL' ? 'error' : alert.severity === 'WARNING' ? 'warning' : 'default'} 
+                      className="m-0 font-bold"
+                    >
+                      {alert.severity}
+                    </Tag>
+                  </div>
+                </div>
+                
+                <div className={`p-3 rounded-md text-sm ${alert.severity === 'CRITICAL' ? 'bg-red-50 text-red-800 border border-red-100' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
+                  {alert.message}
+                </div>
+                
+                <div className="flex justify-between items-center pt-2 mt-1">
+                  <div className="text-xs text-slate-500 flex flex-col">
+                    <span className="font-medium text-slate-700">{new Date(alert.createdAt).toLocaleDateString('vi-VN')}</span>
+                    <span>{new Date(alert.createdAt).toLocaleTimeString('vi-VN')}</span>
+                  </div>
+                  <Space size="small">
+                    <Tag color={alert.isResolved ? 'success' : 'error'} className="m-0">
+                      {alert.isResolved ? 'Đã xử lý' : 'Chưa xử lý'}
+                    </Tag>
+                    {!alert.isResolved && (
+                      <Button 
+                        type="primary" 
+                        ghost 
+                        size="small" 
+                        icon={<CheckCircleOutlined />}
+                        onClick={() => openResolveModal(alert.id)}
+                      >
+                        Xử lý
+                      </Button>
+                    )}
+                  </Space>
+                </div>
+              </div>
+            ))}
+
+            {totalRecords > pageSize && (
+              <div className="flex justify-center mt-2 pb-4">
+                <Pagination
+                  simple
+                  current={pageNumber}
+                  pageSize={pageSize}
+                  total={totalRecords}
+                  onChange={(page) => setPageNumber(page)}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-8 text-slate-500 bg-white border border-slate-200 rounded-lg">
+            Không có cảnh báo nào phù hợp.
+          </div>
+        )}
+      </div>
 
       <Modal
         title="Xử lý Sự cố"
@@ -212,6 +287,7 @@ const Alerts: React.FC = () => {
         onCancel={closeModal}
         footer={null}
         destroyOnClose
+        style={{ top: 20 }}
       >
         <Form form={form} layout="vertical" onFinish={handleResolveSubmit} className="mt-4">
           <Form.Item 
@@ -226,7 +302,7 @@ const Alerts: React.FC = () => {
           </Form.Item>
           
           <Form.Item className="mb-0 text-right mt-6">
-            <Space>
+            <Space className="w-full justify-end md:w-auto">
               <Button onClick={closeModal}>Hủy</Button>
               <Button type="primary" htmlType="submit" className="bg-indigo-600">
                 Xác nhận xử lý

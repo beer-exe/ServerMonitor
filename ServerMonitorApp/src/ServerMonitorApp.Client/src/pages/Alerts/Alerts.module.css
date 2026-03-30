@@ -1,8 +1,8 @@
 @reference "tailwindcss";
 
 .container { @apply space-y-6; }
-.header { @apply flex justify-between items-center; }
-.title { @apply text-2xl font-bold text-slate-800; }
+.header { @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4; }
+.title { @apply text-xl md:text-2xl font-bold text-slate-800; }
 
 .filterCard { @apply bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end; }
 .filterGroup { @apply flex flex-col space-y-1; }

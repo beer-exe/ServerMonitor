@@ -124,7 +124,7 @@ const AccessControl: React.FC = () => {
     });
   };
 
-  const columns = [
+const columns = [
     {
       title: 'Tên Phòng Máy',
       dataIndex: 'roomName',
@@ -185,7 +185,7 @@ const AccessControl: React.FC = () => {
             icon={<SafetyCertificateOutlined />} 
             onClick={() => openModal()} 
             size="large" 
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-emerald-600 hover:bg-emerald-700 w-full md:w-auto"
           >
             Cấp quyền phòng mới
           </Button>
@@ -212,17 +212,68 @@ const AccessControl: React.FC = () => {
       </div>
 
       {selectedUserId ? (
-        <Table 
-          columns={columns} 
-          dataSource={accessList} 
-          rowKey="roomId" 
-          loading={isLoading} 
-          pagination={false} 
-          locale={{ emptyText: 'Nhân viên này chưa được cấp quyền giám sát phòng nào.' }}
-          className="shadow-sm border border-slate-200 rounded-lg overflow-hidden" 
-        />
+        <>
+          <div className="hidden md:block">
+            <Table 
+              columns={columns} 
+              dataSource={accessList} 
+              rowKey="roomId" 
+              loading={isLoading} 
+              pagination={false} 
+              locale={{ emptyText: 'Nhân viên này chưa được cấp quyền giám sát phòng nào.' }}
+              className="shadow-sm border border-slate-200 rounded-lg overflow-hidden" 
+            />
+          </div>
+
+          <div className="md:hidden flex flex-col gap-4">
+            {isLoading ? (
+               <div className="text-center py-8 text-slate-500">Đang tải dữ liệu...</div>
+            ) : accessList.length > 0 ? (
+              accessList.map((record) => (
+                <div key={record.roomId} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-col gap-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">Tên Phòng Máy</div>
+                      <div className="font-semibold text-slate-900 text-base">{record.roomName}</div>
+                    </div>
+                    <div>
+                      <Tag color={record.receiveAlerts ? 'green' : 'red'} className="m-0 font-semibold">
+                        {record.receiveAlerts ? 'Đang bật' : 'Đã tắt'}
+                      </Tag>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-100 mt-1">
+                    <div className="text-sm text-slate-500">
+                      Cập nhật: <span className="text-slate-800 font-medium">{record.updatedAt ? new Date(record.updatedAt).toLocaleDateString('vi-VN') : '--'}</span>
+                    </div>
+                    <Space size="small">
+                      <Button 
+                        type="text" 
+                        className="text-indigo-600 px-2" 
+                        icon={<EditOutlined />} 
+                        onClick={() => openModal(record)}
+                      />
+                      <Button 
+                        type="text" 
+                        danger 
+                        className="px-2"
+                        icon={<DeleteOutlined />} 
+                        onClick={() => handleRevoke(record.roomId)}
+                      />
+                    </Space>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-500 bg-white border border-slate-200 rounded-lg">
+                Nhân viên này chưa được cấp quyền giám sát phòng nào.
+              </div>
+            )}
+          </div>
+        </>
       ) : (
-        <div className="text-center py-12 text-slate-500 bg-white border border-slate-200 rounded-lg">
+        <div className="text-center py-12 text-slate-500 bg-white border border-slate-200 rounded-lg px-4">
           Vui lòng chọn một nhân viên từ danh sách để xem và quản lý quyền truy cập.
         </div>
       )}
@@ -233,15 +284,14 @@ const AccessControl: React.FC = () => {
         onCancel={closeModal}
         footer={null}
         destroyOnClose
+        style={{ top: 20 }}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
-          
           {editingRecord ? (
             <Form.Item label="Phòng Máy" className="mb-4">
-              <div className="p-2 bg-slate-100 border border-slate-200 rounded text-slate-700 font-medium">
+              <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium break-words">
                 {editingRecord.roomName}
               </div>
-              {/* Giữ roomId trong form để submit không bị thiếu */}
               <Form.Item name="roomId" hidden><Input /></Form.Item> 
             </Form.Item>
           ) : (
@@ -250,7 +300,7 @@ const AccessControl: React.FC = () => {
               label="Chọn Phòng Máy" 
               rules={[{ required: true, message: 'Vui lòng chọn phòng máy!' }]}
             >
-              <Select placeholder="Chọn phòng..." size="large" showSearch optionFilterProp="children">
+              <Select placeholder="Chọn phòng..." size="large" showSearch optionFilterProp="children" className="w-full">
                 {availableRooms.map((room) => (
                   <Option key={room.id} value={room.id}>
                     {room.name}
@@ -260,17 +310,14 @@ const AccessControl: React.FC = () => {
             </Form.Item>
           )}
 
-          <Form.Item 
-            name="receiveAlerts" 
-            valuePropName="checked"
-          >
+          <Form.Item name="receiveAlerts" valuePropName="checked">
             <Checkbox className="text-slate-700 font-medium text-base">
               Nhận thông báo khẩn cấp (Receive Alerts)
             </Checkbox>
           </Form.Item>
 
           <Form.Item className="mb-0 text-right mt-6">
-            <Space>
+            <Space className="w-full justify-end md:w-auto">
               <Button onClick={closeModal}>Hủy</Button>
               <Button type="primary" htmlType="submit" className="bg-emerald-600 hover:bg-emerald-700">
                 Lưu quyền
@@ -282,5 +329,4 @@ const AccessControl: React.FC = () => {
     </div>
   );
 };
-
 export default AccessControl;

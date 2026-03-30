@@ -5,9 +5,9 @@
 }
 
 .header {
-  @apply flex justify-between items-center;
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4;
 }
 
 .title {
-  @apply text-2xl font-bold text-slate-800;
+  @apply text-xl md:text-2xl font-bold text-slate-800;
 }

@@ -1,7 +1,7 @@
 @reference "tailwindcss";
 
 .layoutWrapper {
-  @apply flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900;
+  @apply flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900 relative;
 }
 
 .contentWrapper {
@@ -9,5 +9,5 @@
 }
 
 .mainArea {
-  @apply flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-6;
+  @apply flex-1 overflow-x-hidden overflow-y-auto bg-slate-50/50 p-4 md:p-6;
 }
