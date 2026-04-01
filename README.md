@@ -23,22 +23,36 @@ Server Monitor App là một hệ thống backend API được xây dựng trên
     * Quản lý người dùng (Users) và phân quyền quản lý phòng máy.
 * **Báo cáo & Lịch sử:**
     * Cung cấp dữ liệu lịch sử để vẽ biểu đồ theo dõi nhiệt độ, độ ẩm theo thời gian.
+* **Giao diện Web tương tác (Client SPA):**
+    * Quản lý danh mục Phòng máy (Rooms), Thiết bị (Devices) và Người dùng (Users).
+    * Cung cấp biểu đồ trực quan (Recharts) để xem lại dữ liệu lịch sử của thiết bị.    
 
 ---
 
 ## Công nghệ & Kiến trúc
 
-Dự án được cấu trúc theo **Clean Architecture** để đảm bảo tính độc lập, dễ bảo trì và mở rộng.
+Dự án được cấu trúc theo **Clean Architecture** và **CQRS Pattern** cho phần Backend để đảm bảo tính độc lập, dễ bảo trì và mở rộng, kết hợp với Single Page Application (SPA) cho phần Frontend.
 
+### 1. Backend (API)
 * **Framework:** .NET 8 (ASP.NET Core Web API)
-* **Kiến trúc:** Clean Architecture, CQRS Pattern
-* **Thư viện/Công cụ được sử dụng:**
-    * **MediatR:** Triển khai CQRS (Command/Query Responsibility Segregation).
+* **Cơ sở dữ liệu:** PostgreSQL (qua Entity Framework Core)
+* **Thư viện/Công cụ được sử dụng::**
     * **Entity Framework Core (PostgreSQL):** ORM thao tác với cơ sở dữ liệu.
+    * **MediatR:** Triển khai CQRS (Command/Query Responsibility Segregation).
     * **FluentValidation:** Validate dữ liệu đầu vào tự động thông qua Pipeline Behavior.
     * **SignalR:** WebSockets hỗ trợ real-time cho Dashboard và Cảnh báo.
     * **MailKit & MimeKit:** Xử lý tác vụ gửi email thông báo.
-    * **xUnit & Moq:** Framework phục vụ Unit Test và Integration Test.
+    * **BCrypt:** Mã hóa mật khẩu.
+* **Testing:** xUnit & Moq (Framework phục vụ Unit Test và Integration Test.).
+
+### 2. Frontend (Client)
+* **Framework:** ReactJS 19 (với Vite)
+* **Ngôn ngữ:** TypeScript
+* **UI/UX:** Tailwind CSS, Ant Design (antd)
+* **Thư viện/Công cụ được sử dụng::**
+    * **Recharts:** Vẽ biểu đồ trực quan cho dữ liệu lịch sử giám sát (nhiệt độ, độ ẩm).
+    * **Axios:** Gọi API Backend (xử lý HTTP requests, tự động đính kèm và làm mới JWT Token).
+    * **@microsoft/signalr:** WebSockets hỗ trợ real-time lắng nghe luồng dữ liệu cảm biến và nhận cảnh báo tức thời từ server.
 
 ---
 
@@ -47,10 +61,11 @@ Dự án được cấu trúc theo **Clean Architecture** để đảm bảo tí
 ```text
 ServerMonitorApp.sln
 ├── src/
-│   ├── ServerMonitorApp.API/            #Controllers, SignalR Hubs, Middlewares, Background Services
-│   ├── ServerMonitorApp.Application/    #CQRS (Commands, Queries, Event Handlers), DTOs, Interfaces, Validators
-│   ├── ServerMonitorApp.Domain/         #Models (User, Room, Device, Alert, SensorData,...), Exceptions
-│   └── ServerMonitorApp.Infrastructure/ #DbContext (EF Core), Services (Email, JWT, PasswordHasher)
+│   ├── ServerMonitorApp.API/            # Controllers, SignalR Hubs, Background Services
+│   ├── ServerMonitorApp.Application/    # CQRS (Commands/Queries), DTOs, Validators, Interfaces
+│   ├── ServerMonitorApp.Domain/         # Core Models (User, Room, Device, SensorData,...), Exceptions
+│   ├── ServerMonitorApp.Infrastructure/ # DbContext (PostgreSQL), Services (Email, JWT)
+│   └── ServerMonitorApp.Client/         # Web Client Frontend (ReactJS + Vite)
 └── tests/
     ├── ServerMonitorApp.IntegrationTests/ # Test tích hợp API (sử dụng InMemory Db)
     └── ServerMonitorApp.UnitTests/        # Test chức năng từng thành phần (Handlers, Validators)
@@ -62,9 +77,11 @@ ServerMonitorApp.sln
 * [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 * [PostgreSQL](https://www.postgresql.org/download/)
 * [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/).
+* [Visual Studio Code](https://code.visualstudio.com/).
 
-### 2. Cấu hình môi trường
-Đổi tên file `appsettings.Example.json` trong project `ServerMonitorApp.API` thành `appsettings.json` và cập nhật các thông số cho phù hợp với môi trường của bạn:
+### 2. Cài đặt Backend (API)
+2.1 **Cấu hình môi trường**
+* Đổi tên file `appsettings.Example.json` trong project `ServerMonitorApp.API` thành `appsettings.json` và cập nhật các thông số cho phù hợp với môi trường của bạn:
 
 ```json
 {
@@ -99,8 +116,8 @@ ServerMonitorApp.sln
 }
 ```
 
-### 3. Cập nhật Database (Migration)
-Mở terminal tại thư mục root của solution và chạy lệnh sau để khởi tạo cơ sở dữ liệu:
+2.2 **Cập nhật Database (Migration)**
+* Mở terminal tại thư mục root của solution và chạy lệnh sau để khởi tạo cơ sở dữ liệu:
 
 ```bash
 # (Tùy chọn) Cài đặt công cụ EF Core nếu máy bạn chưa có
@@ -119,11 +136,32 @@ dotnet ef database update --project ../ServerMonitorApp.Infrastructure --startup
 dotnet run -- /seed
 ```
 
-### 4. Khởi chạy ứng dụng
-Chạy lệnh sau để khởi động API:
+2.3 **Khởi chạy ứng dụng**
+* Chạy lệnh sau để khởi động API:
 
 ```bash
 dotnet run --project src/ServerMonitorApp.API
 ```
 
-Ứng dụng sẽ chạy tại Swagger UI: http://localhost:5269/swagger
+* **API sẽ khởi chạy với Swagger UI: http://localhost:5269/swagger**
+
+### 3. Cài đặt Frontend (Client)
+3.1 **Cấu hình biến môi trường**
+* Kiểm tra file .env trong thư mục src/ServerMonitorApp.Client và đảm bảo biến môi trường đang trỏ tới đúng cổng của API:
+```bash
+VITE_API_URL=http://localhost:5269
+```
+
+3.2 **Cài đặt dependencies và chạy Web UI**
+* Mở một cửa sổ terminal tại đây và chạy lần lượt các lệnh sau:
+```bash
+# 1. Di chuyển vào thư mục chứa mã nguồn
+cd src/ServerMonitorApp.Client
+
+# 2. Tải và cài đặt tất cả các thư viện, (dependencies) cần thiết
+npm install
+
+# 3. Khởi chạy giao diện
+npm run dev
+```
+* **Giao diện sẽ khởi chạy tại: http://localhost:3000**
